@@ -366,68 +366,141 @@ class Signal:
 4. Handle errors: Log error → Pause strategy → Notify user
 
 
-### 5. Node-Based Strategy Designer
+### 5. Symbol Mapping Service
 
-**Responsibility**: Visual strategy creation, validation, and compilation
+**Responsibility**: Translate between standard NSE symbols and broker-specific symbol tokens
 
-**Node Types**:
-- **Data Nodes**: Market data, indicators (SMA, EMA, RSI, MACD, Bollinger Bands)
-- **Condition Nodes**: Comparisons, logical operators (AND, OR, NOT)
-- **Signal Nodes**: Entry long/short, exit position
-- **Risk Management Nodes**: Stop loss, take profit, trailing stop, position sizing
-- **Timeframe Nodes**: Select timeframe for data/indicators
+**Key Methods**:
+- `getStandardSymbol(brokerName, brokerSymbol)`: Convert broker symbol to standard symbol
+- `getBrokerSymbol(brokerName, standardSymbol)`: Convert standard symbol to broker-specific format
+- `loadSymbolMapping(brokerName, mappingFile)`: Load symbol mapping from CSV
+- `validateSymbol(standardSymbol)`: Check if symbol exists in mapping
+- `getAllMappings(brokerName)`: Get all symbol mappings for a broker
 
 **Data Models**:
 ```python
 @dataclass
-class NodePort:
-    id: str
-    name: str
-    data_type: str  # 'number', 'boolean', 'signal', 'candle'
+class SymbolMapping:
+    standard_symbol: str
+    broker_name: str
+    broker_symbol: str
+    broker_token: str
+    exchange: str  # 'NSE', 'BSE', 'NFO'
+    instrument_type: str  # 'EQ', 'FUT', 'OPT'
+    lot_size: int
+    tick_size: float
 
 @dataclass
-class NodeDefinition:
-    id: str
-    type: str
-    label: str
-    inputs: List[NodePort]
-    outputs: List[NodePort]
-    config: Dict[str, Any]
-
-@dataclass
-class NodePosition:
-    x: float
-    y: float
-
-@dataclass
-class NodeInstance:
-    id: str
-    node_type: str
-    position: NodePosition
-    config: Dict[str, Any]
-
-@dataclass
-class Connection:
-    from_node: str
-    from_port: str
-    to_node: str
-    to_port: str
-
-@dataclass
-class StrategyGraph:
-    nodes: List[NodeInstance]
-    connections: List[Connection]
+class SymbolMappingCache:
+    mappings: Dict[str, Dict[str, SymbolMapping]]  # {broker_name: {standard_symbol: mapping}}
+    last_updated: datetime
 ```
 
-**Compilation Process**:
-1. Validate graph: Check for cycles, disconnected nodes, type mismatches
-2. Generate execution order: Topological sort of nodes
-3. Compile to strategy code: Generate IStrategy implementation
-4. Validate strategy: Test with sample data
-5. Save compiled strategy: Store as Strategy Module
+**Symbol Translation Flow**:
+1. Strategy generates signal with standard symbol (e.g., "RELIANCE")
+2. Order Router calls `getBrokerSymbol("Angel One", "RELIANCE")`
+3. Service returns broker-specific token (e.g., "2885")
+4. Order submitted to broker with correct token
+5. Broker response contains broker token
+6. Service translates back to standard symbol for display
+
+**CSV Format for Symbol Mapping**:
+```csv
+standard_symbol,broker_symbol,broker_token,exchange,instrument_type,lot_size,tick_size
+RELIANCE,RELIANCE-EQ,2885,NSE,EQ,1,0.05
+TCS,TCS-EQ,11536,NSE,EQ,1,0.05
+INFY,INFY-EQ,1594,NSE,EQ,1,0.05
+NIFTY50,NIFTY,99926000,NSE,INDEX,1,0.05
+```
+
+**Design Rationale**: Different brokers use different symbol formats and tokens. Centralizing symbol mapping allows strategies to use standard symbols while the platform handles broker-specific translations. This enables users to switch brokers without modifying strategies. This addresses Requirement 13.
 
 
-### 6. Order Router and Management
+### 6. Risk Management Service
+
+**Responsibility**: Monitor losses and enforce maximum loss limits
+
+**Key Methods**:
+- `setMaxLossLimit(accountId, tradingMode, limitAmount)`: Set maximum loss limit in rupees
+- `calculateCurrentLoss(accountId, tradingMode)`: Calculate total realized + unrealized loss
+- `checkLossLimit(accountId, tradingMode)`: Check if loss limit is breached
+- `pauseAllStrategies(accountId, reason)`: Pause all strategies for an account
+- `acknowledgeLimit Breach(accountId, newLimit)`: Allow user to acknowledge and update limit
+
+**Data Models**:
+```python
+@dataclass
+class RiskLimits:
+    account_id: str
+    trading_mode: str  # 'paper' or 'live'
+    max_loss_limit: float  # in rupees
+    current_loss: float
+    is_breached: bool
+    breached_at: Optional[datetime]
+    acknowledged: bool
+
+@dataclass
+class LossCalculation:
+    realized_loss: float
+    unrealized_loss: float
+    total_loss: float
+    timestamp: datetime
+```
+
+**Loss Monitoring Flow**:
+1. User sets max loss limit when activating first strategy
+2. On every position update: Calculate total loss (realized + unrealized)
+3. If total loss >= max loss limit:
+   - Set is_breached = True
+   - Pause all active strategies immediately
+   - Send urgent notification to user
+   - Prevent new strategy activation
+4. User must acknowledge breach and either:
+   - Increase the limit
+   - Accept current limit and resume
+5. Track separately for paper and live trading
+
+**Design Rationale**: Maximum loss limits protect users from catastrophic losses. Real-time monitoring ensures limits are enforced immediately. Separate limits for paper and live trading allow different risk tolerances. This addresses Requirement 8.
+
+### 7. Concurrent Strategy Limit Manager
+
+**Responsibility**: Enforce admin-configured limits on concurrent strategy execution
+
+**Key Methods**:
+- `setGlobalLimit(tradingMode, maxStrategies)`: Admin sets global limit
+- `getActiveStrategyCount(accountId, tradingMode)`: Count running strategies
+- `canActivateStrategy(accountId, tradingMode)`: Check if activation is allowed
+- `enforceLimit(accountId, tradingMode)`: Validate before strategy activation
+
+**Data Models**:
+```python
+@dataclass
+class StrategyLimits:
+    trading_mode: str  # 'paper' or 'live'
+    max_concurrent_strategies: int
+    current_active_count: int
+    last_updated: datetime
+    updated_by: str  # admin user id
+
+@dataclass
+class AccountStrategyCount:
+    account_id: str
+    trading_mode: str
+    active_strategies: int
+    paused_strategies: int
+```
+
+**Limit Enforcement Flow**:
+1. Admin configures global limit (e.g., 5 strategies per user)
+2. User attempts to activate strategy
+3. System checks: active_count < max_limit
+4. If limit reached: Reject activation with error message
+5. If under limit: Allow activation
+6. Display current count and limit on UI
+
+**Design Rationale**: Limiting concurrent strategies prevents system overload and ensures fair resource allocation. Admin control allows platform scaling based on infrastructure capacity. Separate limits for paper and live trading enable different resource allocation strategies. This addresses Requirement 12.
+
+### 8. Order Router and Management
 
 **Responsibility**: Route orders to brokers, track order lifecycle, simulate paper trading
 
@@ -488,7 +561,7 @@ class Trade:
 **Design Rationale**: Paper trading provides a risk-free environment for strategy validation before committing real capital. By simulating realistic market conditions including slippage and commissions, users can get accurate performance estimates. The separation of paper and live trading data ensures users can clearly distinguish between simulated and real results, addressing Requirement 3 and Requirement 10.
 
 
-### 7. Position Manager
+### 9. Position Manager
 
 **Responsibility**: Track positions, calculate P&L, manage trailing stop-loss
 
@@ -537,7 +610,7 @@ class Position:
 - Trigger exit order when current price <= stop price (long) or >= stop price (short)
 
 
-### 8. Broker Connector Interface
+### 10. Broker Connector Interface
 
 **Responsibility**: Standardized interface for broker integrations
 
@@ -628,7 +701,7 @@ class IBrokerConnector(ABC):
 - Notify user of connection status changes
 
 
-### 9. Backtesting Engine
+### 11. Backtesting Engine
 
 **Responsibility**: Execute strategies against historical data, generate performance reports
 
@@ -705,7 +778,7 @@ class BacktestResult:
 7. Calculate metrics and generate report
 
 
-### 10. Analytics Service
+### 12. Analytics Service
 
 **Responsibility**: Calculate performance metrics, generate reports and charts
 
@@ -784,7 +857,7 @@ class TradeStatistics:
 - Strategy comparison: Bar chart comparing strategy performance
 
 
-### 11. Notification Service
+### 13. Notification Service
 
 **Responsibility**: Send notifications through multiple channels
 
@@ -912,17 +985,56 @@ CREATE TABLE broker_connections (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Strategies
+-- Strategies (Pre-built only)
 CREATE TABLE strategies (
   id UUID PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   description TEXT,
-  strategy_type VARCHAR(50) NOT NULL CHECK (strategy_type IN ('pre_built', 'node_based', 'code_based')),
+  strategy_type VARCHAR(50) NOT NULL CHECK (strategy_type IN ('pre_built')),
   config JSONB NOT NULL,
-  is_public BOOLEAN DEFAULT FALSE,
+  is_public BOOLEAN DEFAULT TRUE,
   created_by UUID REFERENCES users(id),
   created_at TIMESTAMP DEFAULT NOW()
 );
+
+-- Risk Management
+CREATE TABLE risk_limits (
+  account_id UUID REFERENCES user_accounts(id),
+  trading_mode VARCHAR(10) NOT NULL CHECK (trading_mode IN ('paper', 'live')),
+  max_loss_limit DECIMAL(15, 2) NOT NULL,
+  current_loss DECIMAL(15, 2) DEFAULT 0,
+  is_breached BOOLEAN DEFAULT FALSE,
+  breached_at TIMESTAMP,
+  acknowledged BOOLEAN DEFAULT FALSE,
+  updated_at TIMESTAMP DEFAULT NOW(),
+  PRIMARY KEY (account_id, trading_mode)
+);
+
+-- Strategy Limits
+CREATE TABLE strategy_limits (
+  trading_mode VARCHAR(10) PRIMARY KEY CHECK (trading_mode IN ('paper', 'live')),
+  max_concurrent_strategies INT NOT NULL DEFAULT 5,
+  last_updated TIMESTAMP DEFAULT NOW(),
+  updated_by UUID REFERENCES users(id)
+);
+
+-- Symbol Mapping
+CREATE TABLE symbol_mappings (
+  id UUID PRIMARY KEY,
+  standard_symbol VARCHAR(50) NOT NULL,
+  broker_name VARCHAR(50) NOT NULL,
+  broker_symbol VARCHAR(100) NOT NULL,
+  broker_token VARCHAR(100) NOT NULL,
+  exchange VARCHAR(10) NOT NULL,
+  instrument_type VARCHAR(10) NOT NULL,
+  lot_size INT NOT NULL DEFAULT 1,
+  tick_size DECIMAL(10, 4) NOT NULL DEFAULT 0.05,
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(broker_name, standard_symbol)
+);
+
+CREATE INDEX idx_symbol_mappings_broker ON symbol_mappings(broker_name, standard_symbol);
+CREATE INDEX idx_symbol_mappings_token ON symbol_mappings(broker_name, broker_token);
 
 CREATE TABLE active_strategies (
   id UUID PRIMARY KEY,

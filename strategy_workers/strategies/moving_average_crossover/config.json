@@ -1,0 +1,52 @@
+{
+  "name": "Moving Average Crossover",
+  "version": "1.0.0",
+  "description": "Simple trend-following strategy based on moving average crossovers. Generates long signals when fast MA crosses above slow MA, and exit signals when fast MA crosses below slow MA.",
+  "author": "Platform",
+  "parameters": [
+    {
+      "name": "fast_period",
+      "type": "integer",
+      "default": 10,
+      "min": 5,
+      "max": 50,
+      "required": true,
+      "description": "Period for fast moving average"
+    },
+    {
+      "name": "slow_period",
+      "type": "integer",
+      "default": 20,
+      "min": 10,
+      "max": 200,
+      "required": true,
+      "description": "Period for slow moving average"
+    },
+    {
+      "name": "ma_type",
+      "type": "string",
+      "default": "SMA",
+      "options": ["SMA", "EMA"],
+      "required": false,
+      "description": "Type of moving average (SMA or EMA)"
+    },
+    {
+      "name": "confirmation_timeframe",
+      "type": "string",
+      "default": null,
+      "required": false,
+      "description": "Optional higher timeframe for trend confirmation (e.g., '5m' when trading on '1m')"
+    },
+    {
+      "name": "quantity",
+      "type": "integer",
+      "default": 1,
+      "min": 1,
+      "max": 1000,
+      "required": true,
+      "description": "Quantity to trade per signal"
+    }
+  ],
+  "timeframes": ["1m", "5m", "15m", "30m", "1h"],
+  "symbols": ["NIFTY", "BANKNIFTY", "RELIANCE", "TCS", "INFY"]
+}

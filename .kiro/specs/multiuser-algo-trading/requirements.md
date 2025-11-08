@@ -20,6 +20,9 @@ This document outlines the requirements for a multi-user algorithmic trading pla
 - **Historical Data**: Completed candlestick data from past trading periods
 - **Indicator**: A mathematical calculation based on price and volume data used for trading decisions
 - **Multi-Timeframe Strategy**: A trading strategy that analyzes multiple timeframes simultaneously (e.g., 1-minute, 5-minute, and daily charts)
+- **Symbol Mapping**: A translation table that converts standard NSE symbols to broker-specific symbol tokens and vice versa
+- **Concurrent Strategy Limit**: The maximum number of Strategy Modules that can run simultaneously per User Account
+- **Maximum Loss Limit**: A user-configured threshold in rupees that triggers automatic strategy pause when total losses reach this amount
 - **Paper Trading**: Simulated trading using real-time market data without executing actual orders or risking real capital
 - **Live Trading**: Actual trading where orders are executed through broker connections with real capital at risk
 - **Trading Mode**: The operational state of a strategy (either Paper Trading or Live Trading)
@@ -65,7 +68,7 @@ This document outlines the requirements for a multi-user algorithmic trading pla
 2. WHEN a User selects a Strategy Module, THE Trading Platform SHALL load and validate the strategy configuration within 3 seconds
 3. THE Trading Platform SHALL allow Users to configure strategy parameters through a graphical interface without requiring code modifications
 4. WHEN a User activates a Strategy Module, THE Trading Platform SHALL require the User to select either Paper Trading or Live Trading mode before execution begins
-5. THE Trading Platform SHALL support simultaneous execution of up to 10 Strategy Modules per User account with independent Trading Mode settings for each
+5. THE Trading Platform SHALL enforce the Admin-configured concurrent strategy limit when Users attempt to activate Strategy Modules
 
 ### Requirement 4
 
@@ -144,24 +147,24 @@ This document outlines the requirements for a multi-user algorithmic trading pla
 
 ### Requirement 8
 
-**User Story:** As a strategy developer, I want to create custom strategies using a visual node-based designer, so that I can build trading logic without writing code.
+**User Story:** As a trader, I want to set a maximum loss limit in rupees for all my strategies combined, so that I can control my total risk exposure.
 
 #### Acceptance Criteria
 
-1. THE Trading Platform SHALL provide a Node-Based Strategy Designer with a drag-and-drop interface for creating trading strategies
-2. THE Node-Based Strategy Designer SHALL include pre-built nodes for Indicators, conditions, entry signals, exit signals, risk management, and timeframe selection
-3. WHEN a User adds an Indicator node, THE Node-Based Strategy Designer SHALL allow configuration of timeframe and parameters for that Indicator
-4. WHEN a User connects nodes in the designer, THE Trading Platform SHALL validate the logic flow and highlight any configuration errors within 1 second
-5. WHEN a User saves a node-based strategy, THE Trading Platform SHALL compile it into an executable Strategy Module that supports Multi-Timeframe analysis within 3 seconds
-6. THE Trading Platform SHALL allow Users to export and import node-based strategies as JSON configuration files
+1. WHEN a Trader User activates any Strategy Module, THE Trading Platform SHALL require the User to configure a maximum loss limit in rupees
+2. THE Trading Platform SHALL track cumulative realized and unrealized losses across all active Strategy Modules for each User Account
+3. WHEN the total loss across all strategies reaches the configured maximum loss limit, THE Trading Platform SHALL immediately pause all active Strategy Modules for that User Account
+4. THE Trading Platform SHALL send an urgent notification to the User within 2 seconds when the maximum loss limit is reached
+5. THE Trading Platform SHALL prevent strategy reactivation until the User acknowledges the loss limit breach and updates the limit or accepts the current limit
+6. THE Trading Platform SHALL calculate losses separately for Paper Trading and Live Trading modes with independent maximum loss limits
 
 ### Requirement 11
 
-**User Story:** As a trader, I want to backtest my strategies against historical data, so that I can evaluate performance before moving to paper or live trading.
+**User Story:** As a trader, I want to backtest pre-built strategies against historical data, so that I can evaluate performance before moving to paper or live trading.
 
 #### Acceptance Criteria
 
-1. THE Trading Platform SHALL provide a backtesting engine that executes Strategy Modules against historical NSE market data
+1. THE Trading Platform SHALL provide a backtesting engine that executes pre-built Strategy Modules against historical NSE market data
 2. WHEN a User initiates a backtest, THE Trading Platform SHALL allow selection of date range, initial capital, instruments, and timeframes to test
 3. WHEN a backtest completes, THE Trading Platform SHALL generate a performance report including total return, maximum drawdown, Sharpe ratio, win rate, and trade-by-trade details
 4. THE Trading Platform SHALL simulate order execution with configurable slippage and commission parameters during backtesting
@@ -170,15 +173,15 @@ This document outlines the requirements for a multi-user algorithmic trading pla
 
 ### Requirement 12
 
-**User Story:** As a strategy developer, I want to create custom strategies using a standardized code interface, so that I can implement advanced logic beyond the node-based designer.
+**User Story:** As an Admin User, I want to control how many strategies can run simultaneously per user, so that I can manage system resources and prevent overload.
 
 #### Acceptance Criteria
 
-1. THE Trading Platform SHALL define a Strategy Module interface with standardized methods for initialization, signal generation, and cleanup
-2. WHEN a Strategy Module is uploaded, THE Trading Platform SHALL validate the module structure and dependencies within 5 seconds
-3. THE Trading Platform SHALL provide Strategy Modules with access to Market Data Feed and position information through defined APIs
-4. THE Trading Platform SHALL isolate Strategy Module execution to prevent one strategy from affecting others
-5. WHEN a Strategy Module throws an unhandled exception, THE Trading Platform SHALL log the error and pause that strategy without affecting other active strategies
+1. THE Trading Platform SHALL allow Admin Users to configure a global maximum concurrent strategy limit that applies to all Trader Users
+2. WHEN a Trader User attempts to activate a Strategy Module that would exceed the concurrent strategy limit, THE Trading Platform SHALL reject the activation and display the current limit
+3. THE Trading Platform SHALL display the current number of active strategies and the maximum allowed limit on the strategy activation interface
+4. WHEN an Admin User modifies the concurrent strategy limit, THE Trading Platform SHALL apply the new limit immediately without affecting currently running strategies
+5. THE Trading Platform SHALL count active strategies separately for Paper Trading and Live Trading modes with independent limits for each mode
 
 ### Requirement 9
 
@@ -194,15 +197,16 @@ This document outlines the requirements for a multi-user algorithmic trading pla
 
 ### Requirement 13
 
-**User Story:** As a trader, I want to create strategies that analyze multiple timeframes simultaneously, so that I can make trading decisions based on broader market context.
+**User Story:** As a trader, I want the platform to handle different broker symbol formats automatically, so that I can switch brokers without worrying about symbol compatibility.
 
 #### Acceptance Criteria
 
-1. THE Trading Platform SHALL support Multi-Timeframe Strategies that can access data from at least 5 different timeframes concurrently
-2. WHEN a Strategy Module requests Indicator values for a specific timeframe, THE Trading Platform SHALL provide both Historical Data and current Forming Candle values
-3. THE Trading Platform SHALL synchronize Tick Data updates across all timeframes to ensure consistent state during strategy evaluation
-4. THE Trading Platform SHALL support standard timeframes including 1-minute, 3-minute, 5-minute, 15-minute, 30-minute, 1-hour, and 1-day
-5. WHEN any timeframe candle completes, THE Trading Platform SHALL trigger strategy evaluation with updated multi-timeframe data within 200 milliseconds
+1. THE Trading Platform SHALL maintain a symbol mapping table that translates standard NSE symbols to broker-specific symbol tokens
+2. WHEN a Strategy Module generates a trade signal with a standard symbol, THE Trading Platform SHALL automatically convert it to the appropriate broker-specific symbol token before order submission
+3. WHEN Market Data Feed provides updates with broker-specific symbols, THE Trading Platform SHALL convert them to standard symbols for Strategy Module consumption
+4. THE Trading Platform SHALL support symbol mapping for at least three major brokers with different symbol formats
+5. WHEN an Admin User adds a new broker, THE Trading Platform SHALL allow upload of symbol mapping configuration in CSV format
+6. WHEN a symbol mapping is missing for a requested instrument, THE Trading Platform SHALL log an error and notify the Admin User within 5 seconds
 
 ### Requirement 10
 

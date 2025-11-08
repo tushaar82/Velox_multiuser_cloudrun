@@ -5,7 +5,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
 
 **Current Status**: No implementation has started yet. This is a greenfield project.
 
-**Testing Philosophy**: All tasks including tests are required for a comprehensive implementation. Unit and integration tests ensure code quality and reliability from the start.
+**Testing Philosophy**: All tasks including tests are required for a comprehensive implementation. Unit and integration tests ensure code quality and reliability from the start. No tasks are marked as optional - all will be implemented.
 
 ## Implementation Approach
 
@@ -27,7 +27,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
 
 ## Task List
 
-- [ ] 1. Set up project structure and core infrastructure
+- [x] 1. Set up project structure and core infrastructure
   - Create directory structure for microservices (api_gateway, websocket_service, strategy_workers, order_processor, analytics_service, market_data_engine)
   - Set up Python virtual environment and install core dependencies (Flask, Flask-SocketIO, SQLAlchemy, Redis, psycopg2, pandas, numpy)
   - Create Docker base image with Python 3.11 and common dependencies
@@ -36,15 +36,15 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Create Redis connection utilities with cluster support
   - _Requirements: All requirements depend on this foundation_
 
-- [ ] 2. Implement authentication and user management
-- [ ] 2.1 Create user data models and database schema
+- [x] 2. Implement authentication and user management
+- [x] 2.1 Create user data models and database schema
   - Write SQLAlchemy models for User, UserAccount, AccountAccess, InvestorInvitation, Session tables
   - Create database migration scripts using Alembic
   - Implement password hashing utilities using bcrypt
   - Create user role enum (Admin, Trader, Investor)
   - _Requirements: 1.1, 1.4, 1.5_
 
-- [ ] 2.2 Implement authentication service
+- [x] 2.2 Implement authentication service
   - Write user registration endpoint with role assignment and password validation
   - Implement login endpoint with JWT token generation (PyJWT)
   - Create session validation middleware that checks token and inactivity timeout
@@ -54,7 +54,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Create automatic unlock after 15 minutes
   - _Requirements: 1.1, 1.3, 1.4, 1.6_
 
-- [ ] 2.3 Implement user management service
+- [x] 2.3 Implement user management service
   - Write endpoint to create user account for traders
   - Implement investor invitation system (create invitation with 7-day expiration)
   - Create invitation acceptance endpoint that creates AccountAccess record
@@ -65,7 +65,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Implement admin endpoint to disable/enable user accounts
   - _Requirements: 1.2, 14.1, 14.3_
 
-- [ ] 2.4 Write unit tests for authentication
+- [x] 2.4 Write unit tests for authentication
   - Test user registration with valid and invalid inputs
   - Test login with correct and incorrect credentials
   - Test account locking after failed attempts
@@ -73,15 +73,15 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Test JWT token validation and expiration
   - _Requirements: 1.1, 1.3, 1.4, 1.6_
 
-- [ ] 3. Implement broker connection management
-- [ ] 3.1 Create broker connector interface and base classes
+- [x] 3. Implement broker connection management
+- [x] 3.1 Create broker connector interface and base classes
   - Define IBrokerConnector abstract base class with all required methods
   - Create BrokerCredentials, BrokerOrder, BrokerOrderResponse data classes
   - Write broker credentials encryption utilities using AES-256
   - Create broker connection database models (BrokerConnection table)
   - _Requirements: 2.1, 2.4_
 
-- [ ] 3.2 Implement Angel One SmartAPI broker connector
+- [x] 3.2 Implement Angel One SmartAPI broker connector
   - Install SmartAPI Python SDK (smartapi-python)
   - Write Angel One connector class implementing IBrokerConnector
   - Implement connect() method with SmartAPI authentication (API key, client code, password, TOTP)
@@ -95,29 +95,29 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Create mock broker connector for offline testing (simulates order fills without real broker)
   - _Requirements: 2.1, 2.2, 2.3_
 
-- [ ] 3.3 Implement broker connection API endpoints
+- [x] 3.3 Implement broker connection API endpoints
   - Write endpoint to connect broker account with encrypted credential storage
   - Create endpoint to disconnect broker and revoke credentials
   - Implement endpoint to get broker connection status
   - Write endpoint to list available broker plugins
   - _Requirements: 2.2, 2.4, 2.5_
 
-- [ ] 3.4 Write unit tests for broker connectors
+- [x] 3.4 Write unit tests for broker connectors
   - Test broker connection with valid and invalid credentials
   - Test order placement and status retrieval
   - Test reconnection logic after connection loss
   - Test credential encryption and decryption
   - _Requirements: 2.2, 2.3, 2.4_
 
-- [ ] 4. Implement market data engine
-- [ ] 4.1 Create market data models and storage
+- [x] 4. Implement market data engine
+- [x] 4.1 Create market data models and storage
   - Write data classes for Tick, Candle, IndicatorValue
   - Create InfluxDB schema for storing completed candles
   - Implement Redis structures for forming candles (hash per symbol/timeframe)
   - Write candle buffer management (maintain last 500 candles in memory per timeframe)
   - _Requirements: 9.1, 9.4_
 
-- [ ] 4.2 Implement tick data processing and candle formation
+- [x] 4.2 Implement tick data processing and candle formation
   - Write tick data ingestion handler from NSE feed
   - Implement candle update logic for all timeframes (1m, 3m, 5m, 15m, 30m, 1h, 1d)
   - Create candle completion detection and event emission
@@ -125,7 +125,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Implement forming candle updates in Redis
   - _Requirements: 9.2, 9.3_
 
-- [ ] 4.3 Implement indicator calculation system
+- [x] 4.3 Implement indicator calculation system
   - Create IIndicator interface for indicator plugins
   - Implement SMA indicator with configurable period
   - Implement EMA indicator with configurable period
@@ -136,7 +136,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Create indicator value caching in Redis
   - _Requirements: 9.3, 13.2_
 
-- [ ] 4.4 Implement market data subscription and distribution
+- [x] 4.4 Implement market data subscription and distribution
   - Write subscription management (track which strategies need which symbols/timeframes)
   - Implement Angel One SmartAPI WebSocket feed connection for real-time market data
   - Create market data feed reconnection logic with immediate retry
@@ -146,7 +146,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Create market data source abstraction (live feed vs simulated feed)
   - _Requirements: 9.1, 9.5_
 
-- [ ] 4.6 Implement market data simulator for offline testing
+- [x] 4.6 Implement market data simulator for offline testing
   - Write historical data replay engine that streams past market data at configurable speed (1x, 2x, 5x, 10x)
   - Implement CSV file loader for custom tick data
   - Create realistic tick data generator with configurable volatility and trends
@@ -156,98 +156,122 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Store simulated data in same format as live data for consistency
   - _Requirements: 9.1, 9.2, 11.1_
 
-- [ ] 4.5 Write unit tests for market data engine
+- [x] 4.5 Write unit tests for market data engine
   - Test candle formation from tick data for multiple timeframes
   - Test indicator calculations with sample data
   - Test candle completion events
   - Test market data feed reconnection
   - _Requirements: 9.2, 9.3, 9.5_
 
-- [ ] 5. Implement strategy execution engine
-- [ ] 5.1 Create strategy interface and base classes
+- [x] 5. Implement symbol mapping service
+- [x] 5.1 Create symbol mapping data models and database schema
+  - Write SQLAlchemy model for SymbolMapping table
+  - Create database migration for symbol_mappings table with indexes
+  - Implement SymbolMappingCache data class for in-memory caching
+  - _Requirements: 13.1, 13.2_
+
+- [x] 5.2 Implement symbol mapping service
+  - Write method to load symbol mappings from CSV file
+  - Implement getStandardSymbol() to convert broker symbol to standard symbol
+  - Create getBrokerSymbol() to convert standard symbol to broker-specific format
+  - Write validateSymbol() to check if symbol exists in mapping
+  - Implement in-memory cache with Redis fallback for symbol lookups
+  - Create admin endpoint to upload symbol mapping CSV files
+  - _Requirements: 13.2, 13.3, 13.5_
+
+- [x] 5.3 Create default symbol mappings for Angel One
+  - Generate CSV file with common NSE symbols (NIFTY 50 stocks, BANKNIFTY, NIFTY)
+  - Include broker tokens, exchange, instrument type, lot size, tick size
+  - Load default mappings on first startup
+  - _Requirements: 13.1, 13.4_
+
+- [x] 5.4 Write unit tests for symbol mapping
+  - Test symbol translation from standard to broker-specific format
+  - Test reverse translation from broker to standard format
+  - Test CSV file loading and validation
+  - Test missing symbol error handling
+  - _Requirements: 13.2, 13.6_
+
+- [-] 6. Implement risk management service
+- [x] 6.1 Create risk management data models and database schema
+  - Write SQLAlchemy models for RiskLimits and StrategyLimits tables
+  - Create database migrations for risk_limits and strategy_limits tables
+  - Implement RiskLimits and LossCalculation data classes
+  - _Requirements: 8.1, 12.1_
+
+- [x] 6.2 Implement maximum loss limit tracking
+  - Write setMaxLossLimit() endpoint to configure loss limit per account and trading mode
+  - Implement calculateCurrentLoss() to sum realized and unrealized losses across all positions
+  - Create checkLossLimit() that runs on every position update
+  - Write pauseAllStrategies() to immediately stop all strategies when limit breached
+  - Implement acknowledgeLimitBreach() endpoint for user to acknowledge and update limit
+  - Create separate tracking for paper and live trading modes
+  - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
+
+- [x] 6.3 Implement concurrent strategy limit management
+  - Write admin endpoint to set global concurrent strategy limits per trading mode
+  - Implement getActiveStrategyCount() to count running strategies per account
+  - Create canActivateStrategy() validation check before strategy activation
+  - Write enforceLimit() that rejects activation if limit reached
+  - Display current count and limit on strategy activation UI
+  - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.5_
+
+- [x] 6.4 Write unit tests for risk management
+  - Test loss limit calculation with multiple positions
+  - Test automatic strategy pause when limit breached
+  - Test concurrent strategy limit enforcement
+  - Test separate limits for paper and live trading
+  - _Requirements: 8.2, 8.3, 12.2_
+
+- [x] 7. Implement strategy execution engine
+- [x] 7.1 Create strategy interface and base classes
   - Define IStrategy abstract base class with initialize(), on_tick(), on_candle_complete(), cleanup() methods
   - Create StrategyConfig, TimeframeData, MultiTimeframeData, Signal data classes
   - Write strategy state management in Redis
-  - Create strategy plugin manager for loading strategy modules
-  - _Requirements: 12.1, 12.4_
+  - Create strategy plugin manager for loading pre-built strategy modules only
+  - _Requirements: 3.1, 3.2_
 
-- [ ] 5.2 Implement multi-timeframe data provider
+- [x] 7.2 Implement multi-timeframe data provider
   - Write service to aggregate data from multiple timeframes for a symbol
   - Implement logic to provide historical candles and forming candle for each timeframe
   - Create indicator value aggregation across timeframes
   - Write data synchronization to ensure consistent state during strategy evaluation
-  - _Requirements: 13.1, 13.2, 13.3_
+  - _Requirements: 9.3, 9.4_
 
-- [ ] 5.3 Implement strategy execution orchestrator
-  - Write strategy loader that initializes strategies with configuration
+- [x] 7.3 Implement strategy execution orchestrator
+  - Write strategy loader that initializes pre-built strategies with configuration
   - Implement on_tick() execution when market data updates
   - Create on_candle_complete() execution when timeframe candles complete
   - Write signal validation logic before sending to order router
   - Implement strategy error handling (catch exceptions, log, pause strategy)
   - Create strategy pause/resume functionality
-  - _Requirements: 3.2, 12.5, 13.4, 13.5_
+  - Integrate with concurrent strategy limit checks before activation
+  - _Requirements: 3.2, 3.4, 3.5, 12.2_
 
-- [ ] 5.4 Implement pre-built strategy: Moving Average Crossover
+- [x] 7.4 Implement pre-built strategy: Moving Average Crossover
   - Write MA Crossover strategy implementing IStrategy interface
   - Implement configurable fast and slow MA periods
   - Create entry signal logic (fast MA crosses above slow MA for long)
   - Write exit signal logic (fast MA crosses below slow MA)
   - Add support for multi-timeframe confirmation
-  - _Requirements: 3.1, 3.2_
+  - _Requirements: 3.1, 3.3_
 
-- [ ] 5.5 Write unit tests for strategy execution
+- [x] 7.5 Write unit tests for strategy execution
   - Test strategy loading and initialization
   - Test multi-timeframe data aggregation
   - Test signal generation from strategies
   - Test strategy error handling and isolation
   - _Requirements: 12.4, 12.5, 13.3_
 
-- [ ] 6. Implement node-based strategy designer
-- [ ] 6.1 Create node definition system
-  - Write NodePort, NodeDefinition, NodeInstance, Connection, StrategyGraph data classes
-  - Create node type definitions (data nodes, condition nodes, signal nodes, risk nodes, timeframe nodes)
-  - Implement node parameter validation
-  - Write node registry for available node types
-  - _Requirements: 8.1, 8.2_
-
-- [ ] 6.2 Implement strategy graph validation
-  - Write cycle detection algorithm for node connections
-  - Implement disconnected node detection
-  - Create data type compatibility checking between connected ports
-  - Write validation error reporting with specific error messages
-  - _Requirements: 8.4_
-
-- [ ] 6.3 Implement strategy compilation from node graph
-  - Write topological sort to determine node execution order
-  - Create code generator that converts node graph to IStrategy implementation
-  - Implement node execution logic for each node type
-  - Write strategy code optimization (remove unused nodes)
-  - Create compiled strategy validation with sample data
-  - _Requirements: 8.4, 8.5_
-
-- [ ] 6.4 Create node-based designer API endpoints
-  - Write endpoint to get available node types
-  - Implement endpoint to validate strategy graph
-  - Create endpoint to compile and save node-based strategy
-  - Write endpoint to load existing node-based strategy
-  - Implement endpoint to export/import strategy as JSON
-  - _Requirements: 8.1, 8.5, 8.6_
-
-- [ ] 6.5 Write unit tests for node-based designer
-  - Test node graph validation (cycles, disconnected nodes, type mismatches)
-  - Test strategy compilation from various node configurations
-  - Test compiled strategy execution
-  - _Requirements: 8.4, 8.5_
-
-- [ ] 7. Implement order management and routing
-- [ ] 7.1 Create order and trade data models
+- [x] 8. Implement order management and routing
+- [x] 8.1 Create order and trade data models
   - Write SQLAlchemy models for Order and Trade tables
   - Create Order, Trade data classes with all required fields
   - Implement order status enum (pending, submitted, partial, filled, cancelled, rejected)
   - Write database indexes for efficient order queries
   - _Requirements: 10.4_
 
-- [ ] 7.2 Implement paper trading simulation
+- [x] 8.2 Implement paper trading simulation
   - Write paper order execution simulator using current market prices
   - Implement market order fills at current price with configurable slippage (0.05%)
   - Create limit order fills when market reaches limit price
@@ -256,16 +280,18 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Create separate tracking for paper vs live orders
   - _Requirements: 3.4, 10.2, 10.3, 10.6_
 
-- [ ] 7.3 Implement order router for live trading
+- [x] 8.3 Implement order router for live trading with symbol mapping
+  - Integrate symbol mapping service to translate standard symbols to broker-specific tokens before order submission
   - Write order submission to broker connectors based on account configuration
   - Implement order validation before submission
   - Create order status tracking and updates from broker callbacks
+  - Translate broker symbols back to standard symbols in order responses
   - Write order rejection handling and user notification
   - Implement pending order timeout monitoring (30 seconds)
   - Create order audit trail with timestamps and trading mode indicator
-  - _Requirements: 10.1, 10.3, 10.4, 10.5, 10.6_
+  - _Requirements: 10.1, 10.3, 10.4, 10.5, 10.6, 13.2, 13.3_
 
-- [ ] 7.4 Create order management API endpoints
+- [x] 8.4 Create order management API endpoints
   - Write endpoint to submit order (validates trading mode and routes accordingly)
   - Implement endpoint to cancel pending order
   - Create endpoint to modify order parameters
@@ -273,22 +299,55 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Implement endpoint to get all orders for account filtered by trading mode
   - _Requirements: 10.1, 10.2, 10.4_
 
-- [ ] 7.5 Write unit tests for order management
+- [x] 8.5 Write unit tests for order management
   - Test paper trading simulation with various order types
-  - Test order routing to broker connectors
+  - Test order routing to broker connectors with symbol mapping
   - Test order status tracking and updates
   - Test separation of paper and live trading orders
-  - _Requirements: 10.2, 10.3, 10.6_
+  - Test symbol translation in order flow
+  - _Requirements: 10.2, 10.3, 10.6, 13.2_
 
-- [ ] 8. Implement position management
-- [ ] 8.1 Create position data models
+- [ ] 9. Implement position management
+- [ ] 9.1 Create position data models
   - Write SQLAlchemy model for Position table
   - Create Position, TrailingStopConfig data classes
   - Implement position side enum (long, short)
   - Write database indexes for position queries
   - _Requirements: 5.1_
 
-- [ ] 8.2 Implement position tracking and P&L calculation
+- [x] 9.2 Implement position tracking and P&L calculation
+  - Write openPosition() to create position from trade
+  - Implement updatePosition() to modify position with new trades
+  - Create closePosition() to finalize position
+  - Write calculatePnL() for real-time unrealized P&L calculation
+  - Implement separate position tracking for paper and live trading modes
+  - Integrate with risk management service to trigger loss limit checks on every P&L update
+  - _Requirements: 5.1, 5.2, 5.3, 8.2_
+
+- [ ] 9.3 Implement trailing stop-loss management
+  - Write trailing stop-loss initialization with configured percentage
+  - Implement automatic stop price updates on favorable price movements
+  - Create logic for long positions (stop = max(highestPrice * (1 - pct), currentStop))
+  - Write logic for short positions (stop = min(lowestPrice * (1 + pct), currentStop))
+  - Implement stop-loss trigger detection and exit order generation
+  - _Requirements: 4.1, 4.2, 4.3, 4.5_
+
+- [ ] 9.4 Create position management API endpoints
+  - Write endpoint to get all positions for account filtered by trading mode
+  - Implement endpoint to get position history for date range
+  - Create endpoint to manually close position
+  - Write endpoint to update trailing stop-loss configuration
+  - Implement endpoint to get real-time risk metrics (exposure, margin utilization)
+  - _Requirements: 5.1, 5.3, 5.4, 5.5_
+
+- [ ] 9.5 Write unit tests for position management
+  - Test position P&L calculations with price updates
+  - Test trailing stop-loss logic for long and short positions
+  - Test position tracking separation for paper and live modes
+  - Test integration with risk management loss limit checks
+  - _Requirements: 4.2, 4.3, 5.2, 8.2_
+
+- [x] 8.2 Implement position tracking and P&L calculation
   - Write position creation from trade execution
   - Implement position update logic when new trades occur
   - Create unrealized P&L calculation based on current market price
@@ -297,7 +356,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Create separate position tracking for paper vs live trading
   - _Requirements: 5.1, 5.4_
 
-- [ ] 8.3 Implement trailing stop-loss functionality
+- [x] 8.3 Implement trailing stop-loss functionality
   - Write trailing stop-loss configuration per position
   - Implement stop price calculation for long positions (highestPrice * (1 - percentage))
   - Create stop price calculation for short positions (lowestPrice * (1 + percentage))
@@ -306,7 +365,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Create trailing stop-loss trigger notification
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
 
-- [ ] 8.4 Create position management API endpoints
+- [x] 8.4 Create position management API endpoints
   - Write endpoint to get all positions for account filtered by trading mode
   - Implement endpoint to get position history
   - Create endpoint to manually close position
@@ -314,27 +373,27 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Implement endpoint to get real-time risk metrics (exposure, margin utilization)
   - _Requirements: 5.1, 5.2, 5.5_
 
-- [ ] 8.5 Write unit tests for position management
+- [x] 8.5 Write unit tests for position management
   - Test P&L calculations for long and short positions
   - Test trailing stop-loss logic with various price movements
   - Test position closure and realized P&L
   - _Requirements: 4.2, 4.3, 5.1_
 
-- [ ] 9. Implement backtesting engine
-- [ ] 9.1 Create backtest data models and configuration
+- [-] 10. Implement backtesting engine
+- [x] 10.1 Create backtest data models and configuration
   - Write BacktestConfig, BacktestResult, BacktestTrade, EquityPoint, PerformanceMetrics data classes
   - Create SQLAlchemy model for Backtest table
   - Implement backtest configuration validation
   - _Requirements: 11.2_
 
-- [ ] 9.2 Implement historical data loading
+- [x] 10.2 Implement historical data loading
   - Write service to load historical candles from InfluxDB for date range
   - Implement multi-symbol data loading
   - Create multi-timeframe data synchronization
   - Write data validation to ensure completeness
   - _Requirements: 11.2_
 
-- [ ] 9.3 Implement backtest execution engine
+- [x] 10.3 Implement backtest execution engine
   - Write chronological iteration through historical data
   - Implement strategy initialization with backtest config
   - Create tick-by-tick simulation with candle updates and indicator calculations
@@ -343,7 +402,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Create equity curve calculation
   - _Requirements: 11.1, 11.4, 11.5_
 
-- [ ] 9.4 Implement performance metrics calculation
+- [x] 10.4 Implement performance metrics calculation
   - Write total return and annualized return calculations
   - Implement maximum drawdown calculation
   - Create Sharpe ratio and Sortino ratio calculations
@@ -352,7 +411,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Create trade statistics (consecutive wins/losses, holding time)
   - _Requirements: 11.3_
 
-- [ ] 9.5 Create backtest API endpoints
+- [-] 10.5 Create backtest API endpoints
   - Write endpoint to start backtest with configuration
   - Implement endpoint to get backtest status and progress
   - Create endpoint to get backtest results with metrics and trades
@@ -360,19 +419,19 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Implement endpoint to list all backtests for a strategy
   - _Requirements: 11.1, 11.2, 11.3, 11.6_
 
-- [ ] 9.6 Write unit tests for backtesting
+- [ ] 10.6 Write unit tests for backtesting
   - Test backtest execution with sample historical data
   - Test performance metrics calculations
   - Test order fill simulation with slippage and commission
   - _Requirements: 11.3, 11.4_
 
-- [ ] 10. Implement analytics service
-- [ ] 10.1 Create analytics data models
+- [ ] 11. Implement analytics service
+- [ ] 11.1 Create analytics data models
   - Write AnalyticsPeriod, StrategyPerformance, RiskMetrics, PerformanceSummary data classes
   - Create ProfitByTime, ProfitByDay, TradeStatistics data classes
   - _Requirements: 15.1_
 
-- [ ] 10.2 Implement performance metrics calculation
+- [ ] 11.2 Implement performance metrics calculation
   - Write service to calculate metrics for specified period and trading mode
   - Implement equity curve generation from trade history
   - Create strategy-level performance breakdown
@@ -380,7 +439,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Implement drawdown analysis with recovery times
   - _Requirements: 15.2, 15.7_
 
-- [ ] 10.3 Implement trade analysis
+- [ ] 11.3 Implement trade analysis
   - Write average holding time calculation
   - Implement best/worst trade identification
   - Create consecutive win/loss streak calculation
@@ -388,13 +447,13 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Implement profit by day of week analysis
   - _Requirements: 15.5_
 
-- [ ] 10.4 Implement benchmark comparison
+- [ ] 11.4 Implement benchmark comparison
   - Write service to fetch NSE index data (NIFTY 50, BANK NIFTY)
   - Implement performance comparison calculations
   - Create relative performance metrics
   - _Requirements: 15.7_
 
-- [ ] 10.5 Implement chart generation
+- [ ] 11.5 Implement chart generation
   - Write equity curve chart data generation
   - Implement drawdown chart data generation
   - Create win/loss distribution histogram data
@@ -402,7 +461,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Implement strategy comparison bar chart data
   - _Requirements: 15.4_
 
-- [ ] 10.6 Create analytics API endpoints
+- [ ] 11.6 Create analytics API endpoints
   - Write endpoint to get performance metrics for period and trading mode
   - Implement endpoint to get equity curve data
   - Create endpoint to get strategy breakdown by trading mode
@@ -411,14 +470,14 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Create endpoint to compare performance against benchmark
   - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.6, 15.7_
 
-- [ ] 10.7 Write unit tests for analytics
+- [ ] 11.7 Write unit tests for analytics
   - Test performance metrics calculations with sample trades
   - Test equity curve generation
   - Test benchmark comparison calculations
   - _Requirements: 15.2, 15.7_
 
-- [ ] 11. Implement notification service
-- [ ] 11.1 Create notification data models
+- [ ] 12. Implement notification service
+- [ ] 12.1 Create notification data models
   - Write SQLAlchemy model for Notification table
   - Create Notification, NotificationChannelConfig, NotificationPreferences data classes
   - Implement notification type and severity enums
@@ -456,7 +515,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Test notification preferences
   - _Requirements: 6.1, 6.3_
 
-- [ ] 12. Implement WebSocket real-time updates
+- [ ] 13. Implement WebSocket real-time updates
 - [ ] 12.1 Create WebSocket service infrastructure
   - Set up Flask-SocketIO server with Redis adapter for multi-instance support
   - Implement WebSocket authentication using JWT tokens
@@ -490,7 +549,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Test broadcasting across multiple instances
   - _Requirements: 5.2_
 
-- [ ] 13. Implement admin dashboard and monitoring
+- [ ] 14. Implement admin dashboard and monitoring
 - [ ] 13.1 Create admin data aggregation services
   - Write service to get active user count by role
   - Implement service to get total orders processed
@@ -521,7 +580,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Test user account management
   - _Requirements: 7.4, 7.5_
 
-- [ ] 14. Implement Google Cloud Run deployment
+- [ ] 15. Implement Google Cloud Run deployment
 - [ ] 14.1 Create Docker containers for each service
   - Write Dockerfile for API Gateway service
   - Create Dockerfile for WebSocket service
@@ -590,8 +649,8 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Validate performance benchmarks
   - _Requirements: All requirements depend on performance_
 
-- [ ] 15. Implement React frontend
-- [ ] 15.1 Set up React project structure
+- [ ] 16. Implement React frontend
+- [ ] 16.1 Set up React project structure
   - Create React app with TypeScript
   - Set up routing with React Router
   - Configure state management with Redux or Context API
@@ -600,7 +659,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Configure API client with Axios
   - _Requirements: All user-facing requirements_
 
-- [ ] 15.2 Implement authentication UI
+- [ ] 16.2 Implement authentication UI
   - Create login page with email and password fields
   - Write registration page with role selection
   - Implement password validation UI
@@ -609,7 +668,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Implement JWT token storage and refresh
   - _Requirements: 1.1, 1.3, 1.4, 1.5, 1.6_
 
-- [ ] 15.3 Implement user dashboard
+- [ ] 16.3 Implement user dashboard
   - Create dashboard layout with navigation
   - Write portfolio summary component (equity, P&L, active strategies)
   - Implement separate views for paper and live trading
@@ -618,7 +677,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Implement strategy list with start/stop controls
   - _Requirements: 5.1, 5.2, 5.3_
 
-- [ ] 15.4 Implement live charting component
+- [ ] 16.4 Implement live charting component
   - Integrate TradingView Lightweight Charts library
   - Create chart component with symbol and timeframe selection
   - Implement WebSocket subscription for real-time updates
@@ -627,7 +686,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Implement position markers on chart
   - _Requirements: 5.2_
 
-- [ ] 15.5 Implement strategy management UI
+- [ ] 16.5 Implement strategy management UI
   - Create strategy library page showing available strategies
   - Write strategy configuration modal with parameter inputs
   - Implement trading mode selection (paper/live toggle)
@@ -636,17 +695,30 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Implement strategy pause/resume controls
   - _Requirements: 3.1, 3.2, 3.4, 3.5_
 
-- [ ] 15.6 Implement node-based strategy designer UI
-  - Create canvas component for node graph
-  - Write node palette with available node types
-  - Implement drag-and-drop node placement
-  - Create node connection drawing
-  - Write node configuration panels
-  - Implement graph validation with error highlighting
-  - Create strategy compilation and save flow
+- [ ] 16.6 Implement risk management UI
+  - Create maximum loss limit configuration modal when activating first strategy
+  - Write current loss display showing realized + unrealized losses
+  - Implement loss limit breach notification modal with acknowledge button
+  - Create loss limit update form
+  - Write separate loss tracking displays for paper and live trading modes
+  - Implement visual progress bar showing current loss vs limit
   - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
 
-- [ ] 15.7 Implement backtesting UI
+- [ ] 16.7 Implement concurrent strategy limit UI
+  - Display current active strategy count and maximum limit on strategy activation page
+  - Write error message when limit is reached
+  - Create visual indicator showing available strategy slots
+  - Implement admin control to set global limits
+  - _Requirements: 12.1, 12.2, 12.3, 12.4_
+
+- [ ] 16.8 Implement symbol mapping admin UI
+  - Create symbol mapping upload page for CSV files
+  - Write symbol mapping table showing all mappings per broker
+  - Implement validation feedback for uploaded mappings
+  - Create missing symbol error notifications
+  - _Requirements: 13.5, 13.6_
+
+- [ ] 16.9 Implement backtesting UI
   - Create backtest configuration form (date range, capital, symbols, timeframes)
   - Write backtest execution progress indicator
   - Implement backtest results display with metrics
@@ -655,7 +727,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Implement activate in paper trading button
   - _Requirements: 11.1, 11.2, 11.3, 11.6_
 
-- [ ] 15.8 Implement analytics dashboard UI
+- [ ] 16.10 Implement analytics dashboard UI
   - Create performance metrics cards (return, Sharpe ratio, max drawdown, win rate)
   - Write equity curve chart component
   - Implement drawdown chart component
@@ -666,7 +738,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Write export report button (PDF/CSV)
   - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5, 15.6_
 
-- [ ] 15.9 Implement broker connection UI
+- [ ] 16.11 Implement broker connection UI
   - Create broker selection page
   - Write broker credential input form with encryption notice
   - Implement connection status indicator
@@ -674,7 +746,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Write connection error handling and display
   - _Requirements: 2.1, 2.2, 2.5_
 
-- [ ] 15.10 Implement investor invitation UI
+- [ ] 16.12 Implement investor invitation UI
   - Create invite investor form for traders
   - Write pending invitations list
   - Implement revoke access button
@@ -682,7 +754,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Write investor view restrictions (read-only indicators)
   - _Requirements: 1.2, 14.1, 14.2, 14.3, 14.4_
 
-- [ ] 15.11 Implement admin dashboard UI
+- [ ] 16.13 Implement admin dashboard UI
   - Create system health overview with metrics
   - Write user management table with enable/disable controls
   - Implement trading activity summary charts
@@ -690,7 +762,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Write daily report generation interface
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6_
 
-- [ ] 15.12 Implement notification UI
+- [ ] 16.14 Implement notification UI
   - Create notification bell icon with unread count
   - Write notification dropdown with recent notifications
   - Implement notification preferences modal
@@ -698,7 +770,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Write mark as read functionality
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6_
 
-- [ ] 15.13 Write end-to-end tests for critical user flows
+- [ ] 16.15 Write end-to-end tests for critical user flows
   - Test user registration and login flow
   - Test strategy activation and execution flow
   - Test order submission and position tracking
@@ -706,9 +778,9 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Test investor invitation and access
   - _Requirements: All user-facing requirements_
 
-- [ ] 16. Implement offline testing and development tools
+- [ ] 17. Implement offline testing and development tools
 
-- [ ] 16.1 Create comprehensive testing environment
+- [ ] 17.1 Create comprehensive testing environment
   - Write configuration profiles for different modes (live, paper, replay, simulated)
   - Implement environment variable management for switching between modes
   - Create Docker Compose setup for local development with all services
@@ -716,7 +788,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Implement data export/import utilities for sharing test scenarios
   - _Requirements: All requirements_
 
-- [ ] 16.2 Implement market replay system
+- [ ] 17.2 Implement market replay system
   - Write historical data downloader from Angel One SmartAPI (download past 30 days on first run)
   - Create replay session manager (save/load replay state)
   - Implement time travel feature (jump to specific date/time in replay)
@@ -725,7 +797,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Implement replay comparison tool (compare multiple strategy runs on same data)
   - _Requirements: 11.1, 11.2_
 
-- [ ] 16.3 Create development mode features
+- [ ] 17.3 Create development mode features
   - Write strategy debugger with breakpoints on candle completion
   - Implement strategy variable inspector (view indicator values, signals in real-time)
   - Create order simulation with configurable fill delays and slippage
@@ -734,7 +806,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Create strategy performance comparison dashboard for replay sessions
   - _Requirements: 12.4, 12.5_
 
-- [ ] 16.4 Build testing utilities and tools
+- [ ] 17.4 Build testing utilities and tools
   - Write CLI tool for running strategies in replay mode without UI
   - Create automated test suite runner for strategy validation
   - Implement performance profiler for strategy execution
@@ -742,8 +814,8 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Create mock data generator for edge cases (gaps, circuit breakers, extreme volatility)
   - _Requirements: All requirements_
 
-- [ ] 17. Integration and system testing
-- [ ] 17.1 Implement end-to-end integration tests
+- [ ] 18. Integration and system testing
+- [ ] 18.1 Implement end-to-end integration tests
   - Write test for complete trading flow (market data → strategy → order → position)
   - Test multi-timeframe strategy execution
   - Test paper trading vs live trading separation
@@ -751,7 +823,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Test WebSocket real-time updates across services
   - _Requirements: All requirements_
 
-- [ ] 17.2 Perform security testing
+- [ ] 18.2 Perform security testing
   - Test authentication and authorization for all endpoints
   - Verify role-based access control enforcement
   - Test account-level data isolation
@@ -759,7 +831,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Test session timeout and account locking
   - _Requirements: 1.1, 1.4, 1.6, 2.4, 7.3_
 
-- [ ] 17.3 Validate all requirements
+- [ ] 18.3 Validate all requirements
   - Verify each requirement acceptance criteria is met
   - Test edge cases and error scenarios
   - Validate performance metrics (latency, throughput, capacity)
