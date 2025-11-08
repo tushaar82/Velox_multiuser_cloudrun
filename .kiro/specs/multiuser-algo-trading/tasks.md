@@ -379,7 +379,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Test position closure and realized P&L
   - _Requirements: 4.2, 4.3, 5.1_
 
-- [-] 10. Implement backtesting engine
+- [x] 10. Implement backtesting engine
 - [x] 10.1 Create backtest data models and configuration
   - Write BacktestConfig, BacktestResult, BacktestTrade, EquityPoint, PerformanceMetrics data classes
   - Create SQLAlchemy model for Backtest table
@@ -411,7 +411,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Create trade statistics (consecutive wins/losses, holding time)
   - _Requirements: 11.3_
 
-- [-] 10.5 Create backtest API endpoints
+- [x] 10.5 Create backtest API endpoints
   - Write endpoint to start backtest with configuration
   - Implement endpoint to get backtest status and progress
   - Create endpoint to get backtest results with metrics and trades
@@ -419,7 +419,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Implement endpoint to list all backtests for a strategy
   - _Requirements: 11.1, 11.2, 11.3, 11.6_
 
-- [ ] 10.6 Write unit tests for backtesting
+- [x] 10.6 Write unit tests for backtesting
   - Test backtest execution with sample historical data
   - Test performance metrics calculations
   - Test order fill simulation with slippage and commission
