@@ -43,6 +43,16 @@ from shared.models.backtest import (
     PerformanceMetrics,
     BacktestResult
 )
+from shared.models.notification import (
+    Notification,
+    NotificationData,
+    NotificationType,
+    NotificationSeverity,
+    NotificationChannel,
+    NotificationChannelConfig,
+    NotificationPreferences,
+    NotificationRequest
+)
 
 __all__ = [
     "User",
@@ -80,4 +90,12 @@ __all__ = [
     "EquityPoint",
     "PerformanceMetrics",
     "BacktestResult",
+    "Notification",
+    "NotificationData",
+    "NotificationType",
+    "NotificationSeverity",
+    "NotificationChannel",
+    "NotificationChannelConfig",
+    "NotificationPreferences",
+    "NotificationRequest",
 ]
