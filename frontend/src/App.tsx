@@ -76,9 +76,9 @@ function AppContent() {
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/broker" element={<BrokerPage />} />
           <Route path="/risk" element={<RiskManagementPage />} />
-          <Route path="/admin" element={<AdminPage />} />
           <Route path="/investor" element={<InvestorPage />} />
           <Route path="/notifications" element={<NotificationPage />} />
+          <Route path="/admin" element={<AdminPage />} />
         </Route>
       </Routes>
     </Router>

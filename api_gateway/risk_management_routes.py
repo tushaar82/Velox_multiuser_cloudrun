@@ -10,7 +10,7 @@ from uuid import UUID
 from flask import Blueprint, request, jsonify
 from pydantic import BaseModel, Field
 
-from shared.database.connection import get_db
+from shared.database.connection import get_db_session
 from api_gateway.risk_management_service import RiskManagementService
 from api_gateway.middleware import require_auth
 from shared.utils.logging_config import get_logger

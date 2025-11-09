@@ -61,7 +61,7 @@ def main():
     db_session = get_db_session()
     
     # Initialize components
-    symbol_mapping_service = SymbolMappingService(db_session, redis_client)
+    symbol_mapping_service = SymbolMappingService(db_session)
     paper_simulator = PaperTradingSimulator(db_session, redis_client)
     position_manager = PositionManager(db_session)
     trailing_stop_manager = TrailingStopManager(db_session)

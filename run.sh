@@ -103,10 +103,9 @@ start_service() {
     local project_root=$(pwd)
     
     echo "Starting ${service_name}..."
-    cd $service_path
-    PYTHONPATH="${project_root}:${PYTHONPATH}" nohup python3 -m $service_module > "../${log_file}" 2>&1 &
-    echo $! > "../logs/${service_name}.pid"
-    cd - > /dev/null
+    # Run from project root with proper module path
+    PYTHONPATH="${project_root}:${PYTHONPATH}" nohup python3 -m ${service_path}.${service_module} > "${log_file}" 2>&1 &
+    echo $! > "logs/${service_name}.pid"
     echo -e "${GREEN}✓ ${service_name} started (PID: $(cat logs/${service_name}.pid))${NC}"
 }
 
@@ -117,7 +116,7 @@ start_service "api_gateway" "api_gateway" "app"
 start_service "websocket_service" "websocket_service" "app"
 
 # Start Market Data Engine
-start_service "market_data_engine" "market_data_engine" "service"
+start_service "market_data_engine" "market_data_engine" "app"
 
 # Start Order Processor
 start_service "order_processor" "order_processor" "app"

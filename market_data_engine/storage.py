@@ -23,14 +23,14 @@ class InfluxDBStorage:
         self.client = None
         self.write_api = None
         self.query_api = None
-        self.bucket = settings.INFLUXDB_BUCKET
-        self.org = settings.INFLUXDB_ORG
+        self.bucket = settings.influxdb_bucket
+        self.org = settings.influxdb_org
     
     def connect(self) -> None:
         """Establish connection to InfluxDB"""
         self.client = InfluxDBClient(
-            url=settings.INFLUXDB_URL,
-            token=settings.INFLUXDB_TOKEN,
+            url=settings.influxdb_url,
+            token=settings.influxdb_token,
             org=self.org
         )
         self.write_api = self.client.write_api(write_options=SYNCHRONOUS)

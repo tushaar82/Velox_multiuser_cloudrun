@@ -93,7 +93,7 @@ export const LiveChartWithIndicators: React.FC<LiveChartWithIndicatorsProps> = (
       },
     });
 
-    const candleSeries = (chart as any).addCandlestickSeries({
+    const candleSeries = chart.addCandlestickSeries({
       upColor: '#26a69a',
       downColor: '#ef5350',
       borderVisible: false,
@@ -236,7 +236,7 @@ export const LiveChartWithIndicators: React.FC<LiveChartWithIndicatorsProps> = (
 
       const exists = indicatorSeriesRef.current.find((ind) => ind.type === indicator.type);
       if (!exists && chartRef.current) {
-        const lineSeries = (chartRef.current as any).addLineSeries({
+        const lineSeries = chartRef.current.addLineSeries({
           color: indicator.color,
           lineWidth: 2,
           lineStyle: LineStyle.Solid,
@@ -270,8 +270,8 @@ export const LiveChartWithIndicators: React.FC<LiveChartWithIndicatorsProps> = (
       });
 
     try {
-      if ('setMarkers' in candleSeriesRef.current) {
-        (candleSeriesRef.current as any).setMarkers(markers);
+      if (candleSeriesRef.current && 'setMarkers' in candleSeriesRef.current) {
+        candleSeriesRef.current.setMarkers(markers);
       }
     } catch (error) {
       console.warn('Failed to set markers:', error);

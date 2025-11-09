@@ -7,7 +7,7 @@ class ApiClient {
 
   constructor() {
     this.client = axios.create({
-      baseURL: API_BASE_URL,
+      baseURL: `${API_BASE_URL}/api`,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -31,12 +31,13 @@ class ApiClient {
       async (error: AxiosError) => {
         const originalRequest = error.config as any;
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // Only try to refresh token if this is the first 401 and not already a refresh request
+        if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes('/auth/session/refresh')) {
           originalRequest._retry = true;
 
           try {
             // Try to refresh the token
-            const response = await this.client.post('/auth/refresh');
+            const response = await this.client.post('/auth/session/refresh');
             const newToken = response.data.token;
             
             if (newToken) {
@@ -52,8 +53,11 @@ class ApiClient {
           }
         }
 
-        if (error.response?.status === 401) {
-          // Token expired or invalid and refresh failed
+        // If we get here with a 401, it means either:
+        // 1. Token refresh already failed (handled above)
+        // 2. This is a permission denied (not an invalid token)
+        // Only logout if the refresh endpoint itself returned 401
+        if (error.response?.status === 401 && originalRequest.url?.includes('/auth/session/refresh')) {
           localStorage.removeItem('auth_token');
           window.location.href = '/login';
         }
@@ -80,7 +84,7 @@ class ApiClient {
   }
 
   async refreshSession() {
-    const response = await this.client.post('/auth/refresh');
+    const response = await this.client.post('/auth/session/refresh');
     return response.data;
   }
 
@@ -345,33 +349,33 @@ class ApiClient {
   }
 
   // Symbol Mapping
-  async uploadSymbolMapping(brokerName: string, file: File) {
+  async uploadSymbolMappings(file: File, brokerName: string) {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('broker_name', brokerName);
-    const response = await this.client.post('/api/symbol-mappings/upload', formData, {
+    const response = await this.client.post('/symbol-mappings/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data;
   }
 
   async getSymbolMappings(brokerName: string) {
-    const response = await this.client.get(`/api/symbol-mappings/${brokerName}`);
+    const response = await this.client.get(`/symbol-mappings/${brokerName}`);
     return response.data;
   }
 
   async validateSymbol(brokerName: string, standardSymbol: string) {
-    const response = await this.client.get(`/api/symbol-mappings/${brokerName}/${standardSymbol}/validate`);
+    const response = await this.client.get(`/symbol-mappings/${brokerName}/${standardSymbol}/validate`);
     return response.data;
   }
 
   async deleteSymbolMapping(brokerName: string, standardSymbol: string) {
-    const response = await this.client.delete(`/api/symbol-mappings/${brokerName}/${standardSymbol}`);
+    const response = await this.client.delete(`/symbol-mappings/${brokerName}/${standardSymbol}`);
     return response.data;
   }
 
   async clearBrokerMappings(brokerName: string) {
-    const response = await this.client.delete(`/api/symbol-mappings/${brokerName}`);
+    const response = await this.client.delete(`/symbol-mappings/${brokerName}`);
     return response.data;
   }
 
@@ -382,12 +386,7 @@ class ApiClient {
   }
 
   async markNotificationRead(notificationId: string) {
-    const response = await this.client.put(`/notifications/${notificationId}/read`);
-    return response.data;
-  }
-
-  async updateNotificationPreferences(userId: string, preferences: any) {
-    const response = await this.client.put(`/notifications/${userId}/preferences`, preferences);
+    const response = await this.client.patch(`/notifications/${notificationId}/read`);
     return response.data;
   }
 
@@ -396,41 +395,61 @@ class ApiClient {
     return response.data;
   }
 
+  async updateNotificationPreferences(userId: string, preferences: any) {
+    const response = await this.client.put(`/notifications/${userId}/preferences`, preferences);
+    return response.data;
+  }
+
+  async testNotification(userId: string, type: string, channel: string) {
+    const response = await this.client.post(`/notifications/${userId}/test`, { type, channel });
+    return response.data;
+  }
+
+  async subscribeToNotifications(userId: string, types: string[]) {
+    const response = await this.client.post(`/notifications/${userId}/subscribe`, { types });
+    return response.data;
+  }
+
+  async unsubscribeFromNotifications(userId: string, types: string[]) {
+    const response = await this.client.post(`/notifications/${userId}/unsubscribe`, { types });
+    return response.data;
+  }
+
   // Admin
   async getSystemHealth() {
-    const response = await this.client.get('/api/admin/health');
+    const response = await this.client.get('/admin/health');
     return response.data;
   }
 
   async getAllUsers() {
-    const response = await this.client.get('/api/admin/users');
+    const response = await this.client.get('/admin/users');
     return response.data;
   }
 
   async getAllAccounts(includeInactive: boolean = false) {
-    const response = await this.client.get('/api/admin/accounts', {
+    const response = await this.client.get('/admin/accounts', {
       params: { include_inactive: includeInactive },
     });
     return response.data;
   }
 
   async disableUser(userId: string) {
-    const response = await this.client.post(`/api/admin/users/${userId}/disable`);
+    const response = await this.client.post(`/admin/users/${userId}/disable`);
     return response.data;
   }
 
   async enableUser(userId: string) {
-    const response = await this.client.post(`/api/admin/users/${userId}/enable`);
+    const response = await this.client.post(`/admin/users/${userId}/enable`);
     return response.data;
   }
 
   async getAuditLogs(filters?: any) {
-    const response = await this.client.get('/api/admin/audit-logs', { params: filters });
+    const response = await this.client.get('/admin/audit-logs', { params: filters });
     return response.data;
   }
 
   async generateDailyReport(date: string) {
-    const response = await this.client.get('/api/admin/reports/daily', {
+    const response = await this.client.get('/admin/reports/daily', {
       params: { date },
       responseType: 'blob',
     });

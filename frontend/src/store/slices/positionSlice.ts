@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiClient } from '../../services/api';
-import { Position } from '../../types';
+import type { Position } from '../../types';
 
 interface PositionState {
   positions: Position[];

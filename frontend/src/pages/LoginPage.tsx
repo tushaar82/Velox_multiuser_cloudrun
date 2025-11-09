@@ -67,7 +67,7 @@ export default function LoginPage() {
 
     try {
       await dispatch(login({ email, password })).unwrap();
-      navigate('/dashboard');
+      // Navigation will be handled by useEffect when isAuthenticated changes
     } catch (err) {
       // Error is handled by Redux state
     }

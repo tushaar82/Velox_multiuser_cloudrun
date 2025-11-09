@@ -10,7 +10,7 @@ import logging
 from api_gateway.middleware import require_auth, require_role
 from backtesting_engine.backtest_service import BacktestService
 from shared.models.backtest import BacktestConfig
-from shared.database.connection import get_db
+from shared.database.connection import get_db_session
 
 logger = logging.getLogger(__name__)
 

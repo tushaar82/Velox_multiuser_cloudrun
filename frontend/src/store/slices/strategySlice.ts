@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiClient } from '../../services/api';
-import { Strategy, ActiveStrategy } from '../../types';
+import type { Strategy, ActiveStrategy } from '../../types';
 
 interface StrategyState {
   strategies: Strategy[];

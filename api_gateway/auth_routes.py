@@ -64,13 +64,21 @@ def register():
         with get_db_session() as db:
             auth_service = AuthService(db)
             user = auth_service.register(email, password, role)
+            
+            # Get the user's primary account if they're a trader (within session)
+            account_id = None
+            if user.role.value == 'trader' and user.trader_accounts:
+                account_id = str(user.trader_accounts[0].id)
         
         return jsonify({
             'message': 'User registered successfully',
             'user': {
                 'id': str(user.id),
                 'email': user.email,
-                'role': user.role.value
+                'role': user.role.value,
+                'accountId': account_id,
+                'createdAt': user.created_at.isoformat() if user.created_at else None,
+                'isLocked': user.is_locked
             }
         }), 201
         
@@ -120,6 +128,11 @@ def login():
         with get_db_session() as db:
             auth_service = AuthService(db)
             user, token = auth_service.login(email, password, ip_address, user_agent)
+            
+            # Get the user's primary account if they're a trader (within session)
+            account_id = None
+            if user.role.value == 'trader' and user.trader_accounts:
+                account_id = str(user.trader_accounts[0].id)
         
         return jsonify({
             'message': 'Login successful',
@@ -127,7 +140,10 @@ def login():
             'user': {
                 'id': str(user.id),
                 'email': user.email,
-                'role': user.role.value
+                'role': user.role.value,
+                'accountId': account_id,
+                'createdAt': user.created_at.isoformat() if user.created_at else None,
+                'isLocked': user.is_locked
             }
         }), 200
         

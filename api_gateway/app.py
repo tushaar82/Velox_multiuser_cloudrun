@@ -10,6 +10,7 @@ from flask_cors import CORS
 from shared.config.settings import get_settings
 from shared.utils.logging_config import setup_logging
 from shared.utils.health import health_bp
+from shared.database.connection import init_database
 
 # Import all route blueprints
 from api_gateway.auth_routes import auth_bp
@@ -25,15 +26,24 @@ from api_gateway.notification_routes import notification_bp
 from api_gateway.admin_routes import admin_bp
 
 # Setup logging
-setup_logging()
+setup_logging('api_gateway')
 logger = logging.getLogger(__name__)
 
 # Get settings
 settings = get_settings()
 
+# Initialize database
+init_database()
+
 # Create Flask app
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {
+    "origins": "*",
+    "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    "allow_headers": ["Content-Type", "Authorization"],
+    "expose_headers": ["Content-Type", "Authorization"],
+    "supports_credentials": True
+}})
 
 # Configure app
 app.config['SECRET_KEY'] = settings.jwt_secret_key

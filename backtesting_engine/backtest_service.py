@@ -13,7 +13,7 @@ from shared.models.backtest import (
     Backtest, BacktestConfig, BacktestResult, BacktestStatus,
     PerformanceMetrics
 )
-from shared.database.connection import get_db
+from shared.database.connection import get_db_session
 from backtesting_engine.data_loader import HistoricalDataLoader, MultiTimeframeDataSynchronizer
 from backtesting_engine.execution_engine import BacktestExecutionEngine
 from backtesting_engine.metrics_calculator import MetricsCalculator

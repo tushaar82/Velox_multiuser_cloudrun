@@ -68,6 +68,19 @@ export default function DashboardPage() {
     }
   };
 
+  // Show message if user doesn't have an account
+  if (!accountId) {
+    return (
+      <Box>
+        <Typography variant="h4" sx={{ mb: 3 }}>Dashboard</Typography>
+        <Alert severity="info" sx={{ mb: 3 }}>
+          Welcome! To start trading, you need to create a trading account first.
+          Please go to the Investor page to create or access an account.
+        </Alert>
+      </Box>
+    );
+  }
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>

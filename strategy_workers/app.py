@@ -16,6 +16,8 @@ from strategy_workers.strategy_orchestrator import StrategyOrchestrator
 from strategy_workers.strategy_plugin_manager import StrategyPluginManager
 from strategy_workers.strategy_state_manager import StrategyStateManager
 from strategy_workers.multi_timeframe_provider import MultiTimeframeDataProvider
+from strategy_workers.strategy_interface import Candle
+from typing import List
 
 # Setup logging
 setup_logging('strategy_workers')
@@ -51,10 +53,23 @@ def main():
         decode_responses=True
     )
     
+    # Stub implementations for CandleStorage and IndicatorCalculator
+    class StubCandleStorage:
+        def get_recent_candles(self, symbol: str, timeframe: str, count: int) -> List[Candle]:
+            logger.warning(f"StubCandleStorage: get_recent_candles called for {symbol} {timeframe}")
+            return []
+    
+    class StubIndicatorCalculator:
+        def calculate(self, indicator_type: str, candles: List[Candle], **params):
+            logger.warning(f"StubIndicatorCalculator: calculate called for {indicator_type}")
+            return None
+    
     # Initialize components
     plugin_manager = StrategyPluginManager()
     state_manager = StrategyStateManager(redis_client)
-    data_provider = MultiTimeframeDataProvider(redis_client)
+    candle_storage = StubCandleStorage()
+    indicator_calculator = StubIndicatorCalculator()
+    data_provider = MultiTimeframeDataProvider(redis_client, candle_storage, indicator_calculator)
     
     # Initialize orchestrator
     orchestrator = StrategyOrchestrator(

@@ -138,3 +138,29 @@ def optional_auth(f: Callable) -> Callable:
             return f(current_user=None, token=None, *args, **kwargs)
     
     return decorated_function
+
+
+def get_current_user():
+    """
+    Get the current authenticated user from the request context.
+    Returns None if no valid authentication is present.
+    """
+    auth_header = request.headers.get('Authorization')
+    
+    if not auth_header:
+        return None
+    
+    parts = auth_header.split()
+    if len(parts) != 2 or parts[0].lower() != 'bearer':
+        return None
+    
+    token = parts[1]
+    
+    try:
+        with get_db_session() as db:
+            auth_service = AuthService(db)
+            user = auth_service.validate_session(token)
+            return user
+    except Exception as e:
+        logger.warning(f"get_current_user failed: {e}")
+        return None

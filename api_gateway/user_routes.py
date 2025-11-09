@@ -22,6 +22,34 @@ logger = logging.getLogger(__name__)
 user_bp = Blueprint('user', __name__, url_prefix='/api/users')
 
 
+@user_bp.route('/me', methods=['GET'])
+@require_auth
+def get_current_user(current_user, token):
+    """
+    Get current user information.
+    
+    Headers:
+        Authorization: Bearer <token>
+    
+    Returns:
+        200: User information
+        401: Unauthorized
+    """
+    # Get the user's primary account if they're a trader
+    account_id = None
+    if current_user.role.value == 'trader' and current_user.trader_accounts:
+        account_id = str(current_user.trader_accounts[0].id)
+    
+    return jsonify({
+        'id': str(current_user.id),
+        'email': current_user.email,
+        'role': current_user.role.value,
+        'accountId': account_id,
+        'createdAt': current_user.created_at.isoformat() if current_user.created_at else None,
+        'isLocked': current_user.is_locked
+    }), 200
+
+
 @user_bp.route('/accounts', methods=['POST'])
 @require_auth
 @require_role(['trader'])
