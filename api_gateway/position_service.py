@@ -10,22 +10,44 @@ from order_processor.position_manager import PositionManager
 from order_processor.trailing_stop_manager import TrailingStopManager
 from shared.utils.logging_config import get_logger
 
+# Import these only when needed to avoid circular dependencies
+try:
+    from order_processor.trailing_stop_order_handler import TrailingStopOrderHandler
+    from order_processor.order_router import OrderRouter
+except ImportError:
+    TrailingStopOrderHandler = None
+    OrderRouter = None
+
 logger = get_logger(__name__)
 
 
 class PositionService:
     """Service for position management operations."""
     
-    def __init__(self, db_session: Session):
+    def __init__(
+        self,
+        db_session: Session,
+        order_router=None
+    ):
         """
         Initialize position service.
         
         Args:
             db_session: Database session
+            order_router: Optional order router for trailing stop integration
         """
         self.db = db_session
         self.position_manager = PositionManager(db_session)
         self.trailing_stop_manager = TrailingStopManager(db_session)
+        
+        # Initialize trailing stop order handler if order router provided
+        self.trailing_stop_handler = None
+        if order_router and TrailingStopOrderHandler:
+            self.trailing_stop_handler = TrailingStopOrderHandler(
+                db_session=db_session,
+                trailing_stop_manager=self.trailing_stop_manager,
+                order_router=order_router
+            )
     
     def verify_account_access(self, user_id: str, account_id: str) -> bool:
         """
@@ -106,17 +128,35 @@ class PositionService:
         
         Args:
             position_id: Position ID
-            percentage: Trailing stop percentage
+            percentage: Trailing stop percentage (0.001 to 0.1 = 0.1% to 10%)
             current_price: Current market price
             
         Returns:
             Updated position data
+            
+        Raises:
+            ValueError: If percentage is out of valid range
         """
-        return self.trailing_stop_manager.configure_trailing_stop(
-            position_id,
-            percentage,
-            current_price
-        )
+        # Use handler if available for validation, otherwise use manager directly
+        if self.trailing_stop_handler:
+            return self.trailing_stop_handler.configure_trailing_stop_with_validation(
+                position_id,
+                percentage,
+                current_price
+            )
+        else:
+            # Validate percentage range
+            if percentage < 0.001 or percentage > 0.1:
+                raise ValueError(
+                    "Trailing stop percentage must be between 0.1% and 10% "
+                    "(0.001 to 0.1)"
+                )
+            
+            return self.trailing_stop_manager.configure_trailing_stop(
+                position_id,
+                percentage,
+                current_price
+            )
     
     def calculate_risk_metrics(
         self,

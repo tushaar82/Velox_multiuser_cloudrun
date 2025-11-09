@@ -31,7 +31,12 @@ from order_processor.position_manager import PositionManager
 from shared.services.symbol_mapping_service import SymbolMappingService
 from shared.services.notification_service import NotificationService
 from strategy_workers.strategy_plugin_manager import StrategyPluginManager
-from market_data_engine.candle_manager import CandleManager
+try:
+    from market_data_engine.candle_manager import CandleManager
+    MARKET_DATA_AVAILABLE = True
+except ImportError:
+    MARKET_DATA_AVAILABLE = False
+    CandleManager = None
 
 
 @pytest.fixture(scope='function')

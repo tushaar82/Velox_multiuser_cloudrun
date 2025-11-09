@@ -652,8 +652,8 @@ class TestBrokerCredentialEncryption:
             BrokerConnection.id == broker_conn.id
         ).first()
         
-        decrypted_key = decrypt_data(db_conn.encrypted_api_key)
-        decrypted_secret = decrypt_data(db_conn.encrypted_api_secret)
+        decrypted_key = encryptor.decrypt(db_conn.encrypted_api_key)
+        decrypted_secret = encryptor.decrypt(db_conn.encrypted_api_secret)
         
         # Verify decryption works
         assert decrypted_key == api_key

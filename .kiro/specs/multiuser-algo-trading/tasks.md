@@ -324,7 +324,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Integrate with risk management service to trigger loss limit checks on every P&L update
   - _Requirements: 5.1, 5.2, 5.3, 8.2_
 
-- [ ] 9.3 Implement trailing stop-loss management
+- [x] 9.3 Implement trailing stop-loss management
   - Write trailing stop-loss initialization with configured percentage
   - Implement automatic stop price updates on favorable price movements
   - Create logic for long positions (stop = max(highestPrice * (1 - pct), currentStop))
@@ -332,7 +332,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Implement stop-loss trigger detection and exit order generation
   - _Requirements: 4.1, 4.2, 4.3, 4.5_
 
-- [ ] 9.4 Create position management API endpoints
+- [x] 9.4 Create position management API endpoints
   - Write endpoint to get all positions for account filtered by trading mode
   - Implement endpoint to get position history for date range
   - Create endpoint to manually close position
@@ -814,7 +814,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Create mock data generator for edge cases (gaps, circuit breakers, extreme volatility)
   - _Requirements: All requirements_
 
-- [-] 18. Integration and system testing
+- [x] 18. Integration and system testing
 - [x] 18.1 Implement end-to-end integration tests
   - Write test for complete trading flow (market data → strategy → order → position)
   - Test multi-timeframe strategy execution
@@ -831,7 +831,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Test session timeout and account locking
   - _Requirements: 1.1, 1.4, 1.6, 2.4, 7.3_
 
-- [-] 18.3 Validate all requirements
+- [x] 18.3 Validate all requirements
   - Verify each requirement acceptance criteria is met
   - Test edge cases and error scenarios
   - Validate performance metrics (latency, throughput, capacity)
