@@ -21,7 +21,7 @@ from order_processor.trailing_stop_order_handler import TrailingStopOrderHandler
 from order_processor.market_data_processor import MarketDataProcessor
 
 # Setup logging
-setup_logging()
+setup_logging('order_processor')
 logger = logging.getLogger(__name__)
 
 # Get settings

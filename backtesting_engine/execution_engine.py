@@ -17,7 +17,7 @@ from strategy_workers.strategy_interface import (
     Candle, Signal, IndicatorValue
 )
 from backtesting_engine.data_loader import MultiTimeframeDataSynchronizer
-from market_data_engine.indicators import IndicatorCalculator
+from market_data_engine.indicators import IndicatorEngine
 
 logger = logging.getLogger(__name__)
 

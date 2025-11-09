@@ -18,7 +18,7 @@ from strategy_workers.strategy_state_manager import StrategyStateManager
 from strategy_workers.multi_timeframe_provider import MultiTimeframeDataProvider
 
 # Setup logging
-setup_logging()
+setup_logging('strategy_workers')
 logger = logging.getLogger(__name__)
 
 # Get settings

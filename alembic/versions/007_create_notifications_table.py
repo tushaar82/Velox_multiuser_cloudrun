@@ -32,7 +32,7 @@ def upgrade() -> None:
         'loss_limit_breached',
         'strategy_paused',
         name='notification_type',
-        create_type=True
+        create_type=False  # Don't auto-create when used in table
     )
     notification_type_enum.create(op.get_bind(), checkfirst=True)
     
@@ -43,7 +43,7 @@ def upgrade() -> None:
         'error',
         'critical',
         name='notification_severity',
-        create_type=True
+        create_type=False  # Don't auto-create when used in table
     )
     notification_severity_enum.create(op.get_bind(), checkfirst=True)
     

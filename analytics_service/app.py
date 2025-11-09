@@ -13,7 +13,7 @@ from shared.utils.health import health_bp
 from api_gateway.analytics_routes import analytics_bp
 
 # Setup logging
-setup_logging()
+setup_logging('analytics_service')
 logger = logging.getLogger(__name__)
 
 # Get settings

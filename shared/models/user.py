@@ -41,7 +41,7 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
     role = Column(
-        Enum(UserRole, name="user_role", create_type=True),
+        Enum(UserRole, name="user_role", create_type=True, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         default=UserRole.TRADER
     )
@@ -127,7 +127,7 @@ class InvestorInvitation(Base):
     inviter_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     invitee_email = Column(String(255), nullable=False)
     status = Column(
-        Enum(InvitationStatus, name="invitation_status", create_type=True),
+        Enum(InvitationStatus, name="invitation_status", create_type=True, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         default=InvitationStatus.PENDING
     )

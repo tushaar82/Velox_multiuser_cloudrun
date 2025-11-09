@@ -9,7 +9,7 @@ from shared.config.settings import get_settings
 from websocket_service.websocket_server import app, socketio
 
 # Setup logging
-setup_logging()
+setup_logging('websocket_service')
 logger = logging.getLogger(__name__)
 
 # Get settings

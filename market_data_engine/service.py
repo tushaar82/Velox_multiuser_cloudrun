@@ -7,12 +7,12 @@ import logging
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 
-from .models import Tick, Candle, IndicatorValue
-from .storage import InfluxDBStorage, RedisStorage, CandleBufferManager
-from .candle_manager import CandleManager
-from .indicators import IndicatorEngine
-from .subscription_manager import SubscriptionManager
-from .feed_connector import IMarketDataFeed, AngelOneMarketDataFeed, SimulatedMarketDataFeed, MarketDataDistributor
+from market_data_engine.models import Tick, Candle, IndicatorValue
+from market_data_engine.storage import InfluxDBStorage, RedisStorage, CandleBufferManager
+from market_data_engine.candle_manager import CandleManager
+from market_data_engine.indicators import IndicatorEngine
+from market_data_engine.subscription_manager import SubscriptionManager
+from market_data_engine.feed_connector import IMarketDataFeed, AngelOneMarketDataFeed, SimulatedMarketDataFeed, MarketDataDistributor
 
 logger = logging.getLogger(__name__)
 

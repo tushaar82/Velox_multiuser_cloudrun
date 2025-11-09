@@ -4,11 +4,15 @@ Health check utilities for services.
 import logging
 from typing import Dict, Any
 from datetime import datetime
+from flask import Blueprint, jsonify
 
-from shared.database import get_db_manager
-from shared.redis import get_redis_manager
+from shared.database.connection import get_db_manager
+from shared.redis.connection import get_redis_manager
 
 logger = logging.getLogger(__name__)
+
+# Create health check blueprint
+health_bp = Blueprint('health', __name__, url_prefix='/health')
 
 
 class HealthChecker:
@@ -86,3 +90,22 @@ class HealthChecker:
                 "redis": redis
             }
         }
+
+
+# Health check routes
+@health_bp.route('/', methods=['GET'])
+@health_bp.route('', methods=['GET'])
+def health_check():
+    """Basic health check endpoint."""
+    return jsonify({
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat()
+    })
+
+
+@health_bp.route('/detailed', methods=['GET'])
+def detailed_health_check():
+    """Detailed health check with all components."""
+    result = HealthChecker.check_all()
+    status_code = 200 if result["status"] == "healthy" else 503
+    return jsonify(result), status_code
