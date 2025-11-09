@@ -12,7 +12,6 @@ import {
   ListItemText,
   Toolbar,
   Typography,
-  Badge,
   Menu,
   MenuItem,
   Divider,
@@ -25,7 +24,6 @@ import {
   AccountBalance,
   Security,
   AdminPanelSettings,
-  Notifications,
   AccountCircle,
   Logout,
   People,
@@ -34,6 +32,7 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { logout } from '../store/slices/authSlice';
 import { UserRole } from '../types';
 import SessionTimeoutWarning from '../components/auth/SessionTimeoutWarning';
+import { NotificationBell } from '../components/notifications';
 
 const drawerWidth = 240;
 
@@ -41,7 +40,6 @@ export default function MainLayout() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
-  const { unreadCount } = useAppSelector((state) => state.notification);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
@@ -120,11 +118,7 @@ export default function MainLayout() {
             {user?.role === UserRole.TRADER && 'Trader Dashboard'}
             {user?.role === UserRole.INVESTOR && 'Investor Dashboard'}
           </Typography>
-          <IconButton color="inherit" onClick={() => navigate('/notifications')}>
-            <Badge badgeContent={unreadCount} color="error">
-              <Notifications />
-            </Badge>
-          </IconButton>
+          <NotificationBell />
           <IconButton color="inherit" onClick={handleMenuOpen}>
             <AccountCircle />
           </IconButton>

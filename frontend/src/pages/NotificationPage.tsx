@@ -1,14 +1,10 @@
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
+import { NotificationHistory } from '../components/notifications';
 
 export default function NotificationPage() {
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
-        Notifications
-      </Typography>
-      <Typography variant="body1" color="text.secondary">
-        Notification UI will be implemented in subtask 16.14
-      </Typography>
+      <NotificationHistory />
     </Box>
   );
 }

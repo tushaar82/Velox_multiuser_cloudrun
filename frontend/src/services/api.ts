@@ -398,32 +398,39 @@ class ApiClient {
 
   // Admin
   async getSystemHealth() {
-    const response = await this.client.get('/admin/health');
+    const response = await this.client.get('/api/admin/health');
     return response.data;
   }
 
   async getAllUsers() {
-    const response = await this.client.get('/admin/users');
+    const response = await this.client.get('/api/admin/users');
+    return response.data;
+  }
+
+  async getAllAccounts(includeInactive: boolean = false) {
+    const response = await this.client.get('/api/admin/accounts', {
+      params: { include_inactive: includeInactive },
+    });
     return response.data;
   }
 
   async disableUser(userId: string) {
-    const response = await this.client.post(`/admin/users/${userId}/disable`);
+    const response = await this.client.post(`/api/admin/users/${userId}/disable`);
     return response.data;
   }
 
   async enableUser(userId: string) {
-    const response = await this.client.post(`/admin/users/${userId}/enable`);
+    const response = await this.client.post(`/api/admin/users/${userId}/enable`);
     return response.data;
   }
 
   async getAuditLogs(filters?: any) {
-    const response = await this.client.get('/admin/audit-logs', { params: filters });
+    const response = await this.client.get('/api/admin/audit-logs', { params: filters });
     return response.data;
   }
 
   async generateDailyReport(date: string) {
-    const response = await this.client.get('/admin/reports/daily', {
+    const response = await this.client.get('/api/admin/reports/daily', {
       params: { date },
       responseType: 'blob',
     });

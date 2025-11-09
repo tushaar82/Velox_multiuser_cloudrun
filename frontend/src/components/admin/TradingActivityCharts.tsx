@@ -56,12 +56,18 @@ export function TradingActivityCharts() {
     try {
       setError(null);
       setLoading(true);
-      const response = await apiClient.client.get('/api/admin/trading/summary', {
-        params: { period },
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/admin/trading/summary?period=${period}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        },
       });
-      setSummary(response.data);
+      if (!response.ok) {
+        throw new Error('Failed to fetch trading summary');
+      }
+      const data = await response.json();
+      setSummary(data);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to fetch trading summary');
+      setError(err.message || 'Failed to fetch trading summary');
     } finally {
       setLoading(false);
     }
@@ -148,7 +154,7 @@ export function TradingActivityCharts() {
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {strategyData.map((entry, index) => (
+                    {strategyData.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
@@ -204,7 +210,7 @@ export function TradingActivityCharts() {
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {orderStatusData.map((entry, index) => (
+                    {orderStatusData.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
