@@ -1,0 +1,1 @@
+export { SymbolMappingManager } from './SymbolMappingManager';
