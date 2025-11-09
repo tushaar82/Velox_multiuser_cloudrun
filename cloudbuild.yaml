@@ -1,0 +1,201 @@
+# Cloud Build Configuration for Trading Platform
+# Automated build, test, and deployment pipeline
+
+steps:
+  # Step 1: Run tests
+  - name: 'python:3.11-slim'
+    id: 'run-tests'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        apt-get update && apt-get install -y gcc g++ libpq-dev
+        pip install -r requirements.txt
+        pytest tests/ --cov=. --cov-report=term --cov-report=xml -v
+    env:
+      - 'DATABASE_URL=postgresql://test:test@localhost:5432/test'
+      - 'REDIS_HOST=localhost'
+      - 'REDIS_PORT=6379'
+  
+  # Step 2: Build API Gateway image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-api-gateway'
+    args:
+      - 'build'
+      - '-f'
+      - 'api_gateway/Dockerfile'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/api-gateway:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/api-gateway:latest'
+      - '.'
+    waitFor: ['run-tests']
+  
+  # Step 3: Build WebSocket Service image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-websocket'
+    args:
+      - 'build'
+      - '-f'
+      - 'websocket_service/Dockerfile'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/websocket-service:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/websocket-service:latest'
+      - '.'
+    waitFor: ['run-tests']
+  
+  # Step 4: Build Strategy Service image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-strategy'
+    args:
+      - 'build'
+      - '-f'
+      - 'strategy_workers/Dockerfile'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/strategy-service:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/strategy-service:latest'
+      - '.'
+    waitFor: ['run-tests']
+  
+  # Step 5: Build Order Service image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-order'
+    args:
+      - 'build'
+      - '-f'
+      - 'order_processor/Dockerfile'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/order-service:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/order-service:latest'
+      - '.'
+    waitFor: ['run-tests']
+  
+  # Step 6: Build Analytics Service image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-analytics'
+    args:
+      - 'build'
+      - '-f'
+      - 'analytics_service/Dockerfile'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/analytics-service:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/analytics-service:latest'
+      - '.'
+    waitFor: ['run-tests']
+  
+  # Step 7: Push all images to GCR
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-images'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        docker push gcr.io/$PROJECT_ID/api-gateway:$COMMIT_SHA
+        docker push gcr.io/$PROJECT_ID/api-gateway:latest
+        docker push gcr.io/$PROJECT_ID/websocket-service:$COMMIT_SHA
+        docker push gcr.io/$PROJECT_ID/websocket-service:latest
+        docker push gcr.io/$PROJECT_ID/strategy-service:$COMMIT_SHA
+        docker push gcr.io/$PROJECT_ID/strategy-service:latest
+        docker push gcr.io/$PROJECT_ID/order-service:$COMMIT_SHA
+        docker push gcr.io/$PROJECT_ID/order-service:latest
+        docker push gcr.io/$PROJECT_ID/analytics-service:$COMMIT_SHA
+        docker push gcr.io/$PROJECT_ID/analytics-service:latest
+    waitFor:
+      - 'build-api-gateway'
+      - 'build-websocket'
+      - 'build-strategy'
+      - 'build-order'
+      - 'build-analytics'
+  
+  # Step 8: Deploy to staging (automatic)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy-staging'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        # Deploy API Gateway
+        gcloud run deploy api-gateway \
+          --image=gcr.io/$PROJECT_ID/api-gateway:$COMMIT_SHA \
+          --region=asia-south1 \
+          --platform=managed \
+          --tag=staging-$SHORT_SHA
+        
+        # Deploy WebSocket Service
+        gcloud run deploy websocket-service \
+          --image=gcr.io/$PROJECT_ID/websocket-service:$COMMIT_SHA \
+          --region=asia-south1 \
+          --platform=managed \
+          --tag=staging-$SHORT_SHA
+        
+        # Deploy Strategy Service
+        gcloud run deploy strategy-service \
+          --image=gcr.io/$PROJECT_ID/strategy-service:$COMMIT_SHA \
+          --region=asia-south1 \
+          --platform=managed \
+          --tag=staging-$SHORT_SHA
+        
+        # Deploy Order Service
+        gcloud run deploy order-service \
+          --image=gcr.io/$PROJECT_ID/order-service:$COMMIT_SHA \
+          --region=asia-south1 \
+          --platform=managed \
+          --tag=staging-$SHORT_SHA
+        
+        # Deploy Analytics Service
+        gcloud run deploy analytics-service \
+          --image=gcr.io/$PROJECT_ID/analytics-service:$COMMIT_SHA \
+          --region=asia-south1 \
+          --platform=managed \
+          --tag=staging-$SHORT_SHA
+    waitFor: ['push-images']
+  
+  # Step 9: Run smoke tests on staging
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'smoke-tests'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        # Get staging URLs
+        API_URL=$(gcloud run services describe api-gateway --region=asia-south1 --format='value(status.url)')
+        WS_URL=$(gcloud run services describe websocket-service --region=asia-south1 --format='value(status.url)')
+        ANALYTICS_URL=$(gcloud run services describe analytics-service --region=asia-south1 --format='value(status.url)')
+        
+        # Test health endpoints
+        curl -f $API_URL/health || exit 1
+        curl -f $WS_URL/health || exit 1
+        curl -f $ANALYTICS_URL/health || exit 1
+        
+        echo "Smoke tests passed!"
+    waitFor: ['deploy-staging']
+
+# Images to be pushed to Container Registry
+images:
+  - 'gcr.io/$PROJECT_ID/api-gateway:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/api-gateway:latest'
+  - 'gcr.io/$PROJECT_ID/websocket-service:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/websocket-service:latest'
+  - 'gcr.io/$PROJECT_ID/strategy-service:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/strategy-service:latest'
+  - 'gcr.io/$PROJECT_ID/order-service:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/order-service:latest'
+  - 'gcr.io/$PROJECT_ID/analytics-service:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/analytics-service:latest'
+
+# Build options
+options:
+  machineType: 'E2_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
+  logStreamingOption: STREAM_ON
+  
+# Timeout
+timeout: '1800s'  # 30 minutes
+
+# Substitutions
+substitutions:
+  _DEPLOY_REGION: 'asia-south1'

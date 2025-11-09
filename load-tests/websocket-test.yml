@@ -1,0 +1,93 @@
+# WebSocket Load Testing Configuration
+# Tests for 2500+ concurrent WebSocket connections
+
+config:
+  target: "wss://trading.example.com"
+  phases:
+    # Ramp-up to 1000 connections
+    - duration: 300
+      arrivalRate: 10
+      rampTo: 50
+      name: "Ramp-up to 1000"
+    
+    # Sustained 1000 connections
+    - duration: 600
+      arrivalRate: 50
+      name: "Sustained 1000"
+    
+    # Ramp-up to 2500 connections
+    - duration: 300
+      arrivalRate: 50
+      rampTo: 125
+      name: "Ramp-up to 2500"
+    
+    # Sustained 2500 connections
+    - duration: 900
+      arrivalRate: 125
+      name: "Sustained 2500"
+    
+    # Ramp-down
+    - duration: 180
+      arrivalRate: 125
+      rampTo: 0
+      name: "Ramp-down"
+  
+  processor: "./load-tests/scenarios.js"
+  
+  variables:
+    wsUrl: "wss://trading.example.com"
+  
+  plugins:
+    metrics-by-endpoint:
+      stripQueryString: true
+
+scenarios:
+  - name: "WebSocket Connection Test"
+    engine: "ws"
+    flow:
+      # Authenticate first
+      - post:
+          url: "https://trading.example.com/api/auth/login"
+          json:
+            email: "trader@example.com"
+            password: "TestPassword123!"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+      
+      # Connect to WebSocket
+      - ws:
+          url: "{{ wsUrl }}/socket.io/?token={{ authToken }}"
+      
+      # Subscribe to market data
+      - emit:
+          channel: "subscribe_chart"
+          data:
+            symbol: "RELIANCE"
+            timeframe: "5m"
+      
+      # Keep connection alive for 5 minutes
+      - think: 300
+      
+      # Subscribe to another symbol
+      - emit:
+          channel: "subscribe_chart"
+          data:
+            symbol: "TCS"
+            timeframe: "1m"
+      
+      # Keep connection alive for 5 more minutes
+      - think: 300
+      
+      # Unsubscribe
+      - emit:
+          channel: "unsubscribe_chart"
+          data:
+            symbol: "RELIANCE"
+            timeframe: "5m"
+      
+      - emit:
+          channel: "unsubscribe_chart"
+          data:
+            symbol: "TCS"
+            timeframe: "1m"

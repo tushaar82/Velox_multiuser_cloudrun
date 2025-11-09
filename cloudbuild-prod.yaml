@@ -1,0 +1,171 @@
+# Cloud Build Configuration for Production Deployment
+# Manual approval required for production deployment
+
+steps:
+  # Step 1: Deploy to production with traffic migration
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy-production'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        # Deploy API Gateway with no traffic
+        gcloud run deploy api-gateway \
+          --image=gcr.io/$PROJECT_ID/api-gateway:$COMMIT_SHA \
+          --region=asia-south1 \
+          --platform=managed \
+          --no-traffic \
+          --tag=prod-$SHORT_SHA
+        
+        # Deploy WebSocket Service with no traffic
+        gcloud run deploy websocket-service \
+          --image=gcr.io/$PROJECT_ID/websocket-service:$COMMIT_SHA \
+          --region=asia-south1 \
+          --platform=managed \
+          --no-traffic \
+          --tag=prod-$SHORT_SHA
+        
+        # Deploy Strategy Service with no traffic
+        gcloud run deploy strategy-service \
+          --image=gcr.io/$PROJECT_ID/strategy-service:$COMMIT_SHA \
+          --region=asia-south1 \
+          --platform=managed \
+          --no-traffic \
+          --tag=prod-$SHORT_SHA
+        
+        # Deploy Order Service with no traffic
+        gcloud run deploy order-service \
+          --image=gcr.io/$PROJECT_ID/order-service:$COMMIT_SHA \
+          --region=asia-south1 \
+          --platform=managed \
+          --no-traffic \
+          --tag=prod-$SHORT_SHA
+        
+        # Deploy Analytics Service with no traffic
+        gcloud run deploy analytics-service \
+          --image=gcr.io/$PROJECT_ID/analytics-service:$COMMIT_SHA \
+          --region=asia-south1 \
+          --platform=managed \
+          --no-traffic \
+          --tag=prod-$SHORT_SHA
+  
+  # Step 2: Run production smoke tests
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'prod-smoke-tests'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        # Get revision URLs
+        API_URL=$(gcloud run services describe api-gateway --region=asia-south1 --format='value(status.traffic[0].url)')
+        WS_URL=$(gcloud run services describe websocket-service --region=asia-south1 --format='value(status.traffic[0].url)')
+        ANALYTICS_URL=$(gcloud run services describe analytics-service --region=asia-south1 --format='value(status.traffic[0].url)')
+        
+        # Test health endpoints
+        curl -f $API_URL/health || exit 1
+        curl -f $WS_URL/health || exit 1
+        curl -f $ANALYTICS_URL/health || exit 1
+        
+        echo "Production smoke tests passed!"
+    waitFor: ['deploy-production']
+  
+  # Step 3: Gradual traffic migration (10%)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'traffic-10'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        # Get new revision names
+        API_REV=$(gcloud run revisions list --service=api-gateway --region=asia-south1 --format='value(metadata.name)' --limit=1)
+        WS_REV=$(gcloud run revisions list --service=websocket-service --region=asia-south1 --format='value(metadata.name)' --limit=1)
+        STRATEGY_REV=$(gcloud run revisions list --service=strategy-service --region=asia-south1 --format='value(metadata.name)' --limit=1)
+        ORDER_REV=$(gcloud run revisions list --service=order-service --region=asia-south1 --format='value(metadata.name)' --limit=1)
+        ANALYTICS_REV=$(gcloud run revisions list --service=analytics-service --region=asia-south1 --format='value(metadata.name)' --limit=1)
+        
+        # Migrate 10% traffic
+        gcloud run services update-traffic api-gateway --region=asia-south1 --to-revisions=$API_REV=10
+        gcloud run services update-traffic websocket-service --region=asia-south1 --to-revisions=$WS_REV=10
+        gcloud run services update-traffic strategy-service --region=asia-south1 --to-revisions=$STRATEGY_REV=10
+        gcloud run services update-traffic order-service --region=asia-south1 --to-revisions=$ORDER_REV=10
+        gcloud run services update-traffic analytics-service --region=asia-south1 --to-revisions=$ANALYTICS_REV=10
+        
+        echo "10% traffic migrated. Monitoring for 5 minutes..."
+        sleep 300
+    waitFor: ['prod-smoke-tests']
+  
+  # Step 4: Check metrics after 10% traffic
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'check-metrics-10'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        # Check error rate
+        ERROR_RATE=$(gcloud monitoring time-series list \
+          --filter='resource.type="cloud_run_revision" AND metric.type="run.googleapis.com/request_count" AND metric.labels.response_code_class="5xx"' \
+          --format='value(point.value.int64Value)' \
+          --limit=1)
+        
+        if [ "$ERROR_RATE" -gt 10 ]; then
+          echo "Error rate too high: $ERROR_RATE"
+          exit 1
+        fi
+        
+        echo "Metrics look good. Proceeding with traffic migration."
+    waitFor: ['traffic-10']
+  
+  # Step 5: Migrate 50% traffic
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'traffic-50'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        # Get new revision names
+        API_REV=$(gcloud run revisions list --service=api-gateway --region=asia-south1 --format='value(metadata.name)' --limit=1)
+        WS_REV=$(gcloud run revisions list --service=websocket-service --region=asia-south1 --format='value(metadata.name)' --limit=1)
+        STRATEGY_REV=$(gcloud run revisions list --service=strategy-service --region=asia-south1 --format='value(metadata.name)' --limit=1)
+        ORDER_REV=$(gcloud run revisions list --service=order-service --region=asia-south1 --format='value(metadata.name)' --limit=1)
+        ANALYTICS_REV=$(gcloud run revisions list --service=analytics-service --region=asia-south1 --format='value(metadata.name)' --limit=1)
+        
+        # Migrate 50% traffic
+        gcloud run services update-traffic api-gateway --region=asia-south1 --to-revisions=$API_REV=50
+        gcloud run services update-traffic websocket-service --region=asia-south1 --to-revisions=$WS_REV=50
+        gcloud run services update-traffic strategy-service --region=asia-south1 --to-revisions=$STRATEGY_REV=50
+        gcloud run services update-traffic order-service --region=asia-south1 --to-revisions=$ORDER_REV=50
+        gcloud run services update-traffic analytics-service --region=asia-south1 --to-revisions=$ANALYTICS_REV=50
+        
+        echo "50% traffic migrated. Monitoring for 5 minutes..."
+        sleep 300
+    waitFor: ['check-metrics-10']
+  
+  # Step 6: Complete migration (100%)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'traffic-100'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        # Migrate all traffic to latest
+        gcloud run services update-traffic api-gateway --region=asia-south1 --to-latest
+        gcloud run services update-traffic websocket-service --region=asia-south1 --to-latest
+        gcloud run services update-traffic strategy-service --region=asia-south1 --to-latest
+        gcloud run services update-traffic order-service --region=asia-south1 --to-latest
+        gcloud run services update-traffic analytics-service --region=asia-south1 --to-latest
+        
+        echo "Production deployment complete!"
+    waitFor: ['traffic-50']
+
+# Build options
+options:
+  machineType: 'E2_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
+  logStreamingOption: STREAM_ON
+
+# Timeout
+timeout: '3600s'  # 60 minutes
+
+# Substitutions
+substitutions:
+  _DEPLOY_REGION: 'asia-south1'

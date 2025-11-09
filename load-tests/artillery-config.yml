@@ -1,0 +1,234 @@
+# Artillery Load Testing Configuration
+# Tests for 500 concurrent users with realistic trading scenarios
+
+config:
+  target: "https://trading.example.com"
+  phases:
+    # Warm-up phase
+    - duration: 60
+      arrivalRate: 10
+      name: "Warm-up"
+    
+    # Ramp-up phase
+    - duration: 300
+      arrivalRate: 10
+      rampTo: 100
+      name: "Ramp-up to 100 users"
+    
+    # Sustained load
+    - duration: 600
+      arrivalRate: 100
+      name: "Sustained 100 users"
+    
+    # Peak load
+    - duration: 300
+      arrivalRate: 100
+      rampTo: 500
+      name: "Ramp-up to 500 users"
+    
+    # Peak sustained
+    - duration: 600
+      arrivalRate: 500
+      name: "Sustained 500 users"
+    
+    # Ramp-down
+    - duration: 180
+      arrivalRate: 500
+      rampTo: 0
+      name: "Ramp-down"
+  
+  processor: "./load-tests/scenarios.js"
+  
+  variables:
+    apiUrl: "https://trading.example.com"
+    wsUrl: "wss://trading.example.com"
+  
+  defaults:
+    headers:
+      Content-Type: "application/json"
+  
+  plugins:
+    metrics-by-endpoint:
+      stripQueryString: true
+    
+    expect:
+      outputFormat: "pretty"
+    
+    statsd:
+      host: "localhost"
+      port: 8125
+      prefix: "artillery"
+
+scenarios:
+  # Scenario 1: User Authentication Flow
+  - name: "Authentication Flow"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ $randomEmail() }}"
+            password: "TestPassword123!"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+          expect:
+            - statusCode: 200
+            - contentType: json
+            - hasProperty: token
+      
+      - get:
+          url: "/api/auth/session"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+      
+      - think: 5
+      
+      - post:
+          url: "/api/auth/logout"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+  
+  # Scenario 2: View Dashboard
+  - name: "View Dashboard"
+    weight: 30
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "trader@example.com"
+            password: "TestPassword123!"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+      
+      - get:
+          url: "/api/positions"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+      
+      - get:
+          url: "/api/orders"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+      
+      - think: 10
+      
+      - get:
+          url: "/api/analytics/performance?period=daily"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+  
+  # Scenario 3: Place Order
+  - name: "Place Order"
+    weight: 25
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "trader@example.com"
+            password: "TestPassword123!"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+      
+      - post:
+          url: "/api/orders"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            symbol: "RELIANCE"
+            side: "buy"
+            quantity: 10
+            order_type: "market"
+            trading_mode: "paper"
+          expect:
+            - statusCode: 201
+      
+      - think: 5
+      
+      - get:
+          url: "/api/orders"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+  
+  # Scenario 4: View Analytics
+  - name: "View Analytics"
+    weight: 15
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "trader@example.com"
+            password: "TestPassword123!"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+      
+      - get:
+          url: "/api/analytics/performance?period=weekly"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+      
+      - think: 5
+      
+      - get:
+          url: "/api/analytics/equity-curve"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+      
+      - think: 5
+      
+      - get:
+          url: "/api/analytics/strategy-breakdown"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+  
+  # Scenario 5: WebSocket Connection
+  - name: "WebSocket Real-time Updates"
+    weight: 10
+    engine: "ws"
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "trader@example.com"
+            password: "TestPassword123!"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+      
+      - ws:
+          url: "{{ wsUrl }}/socket.io/?token={{ authToken }}"
+          
+      - emit:
+          channel: "subscribe_chart"
+          data:
+            symbol: "RELIANCE"
+            timeframe: "5m"
+      
+      - think: 30
+      
+      - emit:
+          channel: "unsubscribe_chart"
+          data:
+            symbol: "RELIANCE"
+            timeframe: "5m"

@@ -1,0 +1,66 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: strategy-service
+  labels:
+    cloud.googleapis.com/location: asia-south1
+  annotations:
+    run.googleapis.com/ingress: internal
+    run.googleapis.com/ingress-status: internal
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: '1'
+        autoscaling.knative.dev/maxScale: '50'
+        run.googleapis.com/cloudsql-instances: PROJECT_ID:asia-south1:trading-platform-db-prod
+        run.googleapis.com/vpc-access-connector: trading-platform-connector
+        run.googleapis.com/vpc-access-egress: private-ranges-only
+        run.googleapis.com/cpu-throttling: 'false'
+        run.googleapis.com/startup-cpu-boost: 'true'
+    spec:
+      containerConcurrency: 10
+      timeoutSeconds: 600
+      serviceAccountName: trading-platform-sa@PROJECT_ID.iam.gserviceaccount.com
+      containers:
+      - name: strategy-service
+        image: gcr.io/PROJECT_ID/strategy-service:latest
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: database-url
+              key: latest
+        - name: REDIS_HOST
+          valueFrom:
+            secretKeyRef:
+              name: redis-host
+              key: latest
+        - name: REDIS_PORT
+          value: '6379'
+        - name: INFLUXDB_URL
+          valueFrom:
+            secretKeyRef:
+              name: influxdb-url
+              key: latest
+        - name: INFLUXDB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: influxdb-token
+              key: latest
+        - name: INFLUXDB_ORG
+          value: 'trading-platform'
+        - name: INFLUXDB_BUCKET
+          value: 'market-data'
+        - name: ENVIRONMENT
+          value: 'production'
+        resources:
+          limits:
+            cpu: '2000m'
+            memory: '2Gi'
+          requests:
+            cpu: '500m'
+            memory: '512Mi'
+  traffic:
+  - percent: 100
+    latestRevision: true

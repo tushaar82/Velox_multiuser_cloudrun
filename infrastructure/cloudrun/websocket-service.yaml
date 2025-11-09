@@ -1,0 +1,74 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: websocket-service
+  labels:
+    cloud.googleapis.com/location: asia-south1
+  annotations:
+    run.googleapis.com/ingress: all
+    run.googleapis.com/ingress-status: all
+    run.googleapis.com/session-affinity: 'true'
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: '2'
+        autoscaling.knative.dev/maxScale: '50'
+        run.googleapis.com/vpc-access-connector: trading-platform-connector
+        run.googleapis.com/vpc-access-egress: private-ranges-only
+        run.googleapis.com/cpu-throttling: 'false'
+        run.googleapis.com/startup-cpu-boost: 'true'
+        run.googleapis.com/execution-environment: gen2
+    spec:
+      containerConcurrency: 50
+      timeoutSeconds: 3600  # 1 hour for WebSocket connections
+      serviceAccountName: trading-platform-sa@PROJECT_ID.iam.gserviceaccount.com
+      containers:
+      - name: websocket-service
+        image: gcr.io/PROJECT_ID/websocket-service:latest
+        ports:
+        - name: h2c
+          containerPort: 8081
+        env:
+        - name: REDIS_HOST
+          valueFrom:
+            secretKeyRef:
+              name: redis-host
+              key: latest
+        - name: REDIS_PORT
+          value: '6379'
+        - name: JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret-key
+              key: latest
+        - name: ENVIRONMENT
+          value: 'production'
+        - name: WEBSOCKET_PORT
+          value: '8081'
+        resources:
+          limits:
+            cpu: '2000m'
+            memory: '2Gi'
+          requests:
+            cpu: '1000m'
+            memory: '512Mi'
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8081
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8081
+          initialDelaySeconds: 0
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 12
+  traffic:
+  - percent: 100
+    latestRevision: true
