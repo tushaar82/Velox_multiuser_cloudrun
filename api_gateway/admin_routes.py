@@ -24,7 +24,7 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
 
 @admin_bp.route('/health', methods=['GET'])
 @require_auth
-def get_system_health():
+def get_system_health(current_user, token):
     """
     Get system health dashboard data.
     
@@ -32,7 +32,7 @@ def get_system_health():
         JSON with system metrics
     """
     try:
-        user_id = request.user_id
+        user_id = current_user.id
         db: Session = get_db_session()
         service = AdminService(db)
         
@@ -182,18 +182,18 @@ def get_trading_summary():
 
 @admin_bp.route('/accounts', methods=['GET'])
 @require_auth
-def get_all_accounts():
+def get_all_accounts(current_user, token):
     """
     Get all user accounts with activity metrics.
     
-    Query Parameters:
+    Query params:
         include_inactive: Include inactive accounts (default: false)
     
     Returns:
-        JSON with list of accounts
+        List of accounts with metrics
     """
     try:
-        user_id = request.user_id
+        user_id = current_user.id
         include_inactive = request.args.get('include_inactive', 'false').lower() == 'true'
         
         db: Session = get_db_session()
@@ -451,22 +451,23 @@ def get_metric_history(metric_name: str):
 
 @admin_bp.route('/audit-logs', methods=['GET'])
 @require_auth
-def get_audit_logs():
+def get_audit_logs(current_user, token):
     """
     Get audit logs for system activities.
     
-    Query Parameters:
+    Query params:
+        user_id: Filter by user ID
+        action: Filter by action type
+        resource: Filter by resource type
         start_date: Start date (ISO format)
         end_date: End date (ISO format)
-        user_id: Filter by specific user
-        action_type: Filter by action type
-        limit: Maximum number of logs (default: 100)
+        limit: Number of records (default: 100)
     
     Returns:
-        JSON with audit logs
+        List of audit log entries
     """
     try:
-        user_id = request.user_id
+        admin_user_id = current_user.id
         
         # Parse parameters
         start_date = None
