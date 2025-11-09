@@ -738,7 +738,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Write export report button (PDF/CSV)
   - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5, 15.6_
 
-- [-] 16.11 Implement broker connection UI
+- [x] 16.11 Implement broker connection UI
   - Create broker selection page
   - Write broker credential input form with encryption notice
   - Implement connection status indicator
@@ -746,7 +746,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Write connection error handling and display
   - _Requirements: 2.1, 2.2, 2.5_
 
-- [ ] 16.12 Implement investor invitation UI
+- [x] 16.12 Implement investor invitation UI
   - Create invite investor form for traders
   - Write pending invitations list
   - Implement revoke access button
@@ -754,7 +754,7 @@ This implementation plan breaks down the multi-user algorithmic trading platform
   - Write investor view restrictions (read-only indicators)
   - _Requirements: 1.2, 14.1, 14.2, 14.3, 14.4_
 
-- [ ] 16.13 Implement admin dashboard UI
+- [-] 16.13 Implement admin dashboard UI
   - Create system health overview with metrics
   - Write user management table with enable/disable controls
   - Implement trading activity summary charts

@@ -115,6 +115,16 @@ class ApiClient {
     return response.data;
   }
 
+  async getPendingInvitations(accountId: string) {
+    const response = await this.client.get(`/users/accounts/${accountId}/invitations`);
+    return response.data;
+  }
+
+  async revokeInvitation(invitationId: string) {
+    const response = await this.client.delete(`/users/invitations/${invitationId}`);
+    return response.data;
+  }
+
   // Broker Connections
   async connectBroker(accountId: string, brokerName: string, credentials: any) {
     const response = await this.client.post(`/brokers/connect`, {

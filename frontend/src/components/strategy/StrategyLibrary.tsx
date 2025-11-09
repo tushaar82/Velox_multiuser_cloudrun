@@ -14,6 +14,7 @@ import {
 import type { Strategy } from '../../types';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { fetchStrategies, setSelectedStrategy } from '../../store/slices/strategySlice';
+import { useReadOnlyAccess } from '../../hooks/useReadOnlyAccess';
 
 interface StrategyLibraryProps {
   onSelectStrategy: (strategy: Strategy) => void;
@@ -22,6 +23,7 @@ interface StrategyLibraryProps {
 export default function StrategyLibrary({ onSelectStrategy }: StrategyLibraryProps) {
   const dispatch = useAppDispatch();
   const { strategies, loading, error } = useAppSelector((state) => state.strategy);
+  const isReadOnly = useReadOnlyAccess();
 
   useEffect(() => {
     dispatch(fetchStrategies());
@@ -114,8 +116,9 @@ export default function StrategyLibrary({ onSelectStrategy }: StrategyLibraryPro
                   variant="contained"
                   fullWidth
                   onClick={() => handleSelectStrategy(strategy)}
+                  disabled={isReadOnly}
                 >
-                  Configure & Activate
+                  {isReadOnly ? 'View Only' : 'Configure & Activate'}
                 </Button>
               </CardActions>
             </Card>
