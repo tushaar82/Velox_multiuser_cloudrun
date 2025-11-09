@@ -1,7 +1,7 @@
 # Position Management API Endpoints
 
 ## Overview
-This document provides a quick reference for all position management API endpoints implemented in task 9.4.
+This document provides a quick reference for all position management API endpoints implemented in task 9.4
 
 ---
 
